@@ -1,0 +1,403 @@
+﻿<fw:AcrylicWindow 
+    x:Name="Calc"
+    Icon="./Icons/Calculator.ico"
+    x:Class="Calculator.CalcView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="clr-namespace:Calculator"
+    xmlns:fw="clr-namespace:SourceChord.FluentWPF;assembly=FluentWPF"
+    d:DataContext="{d:DesignInstance Type=local:CalcViewModel}"
+    mc:Ignorable="d"
+    Height="476" 
+    Width="310" 
+    ResizeMode="CanMinimize"
+    Background="#A333"
+    TextOptions.TextRenderingMode="Grayscale"
+    FontFamily="./Fonts/#Lato"
+    FontWeight="Thin"
+    AcrylicWindowStyle="NoIcon"
+    FallbackColor="#A000"
+    NoiseOpacity="0.01"
+    fw:PointerTracker.Enabled="True"
+    BorderBrush="Transparent">
+
+    <!-- TODO: Память: 1. Очистка выделенной ячейки памяти; 2. При наведении курсора на Display выводить подсказку с [M+, M-, MS]; 3. То же что и в п.2, только для элемента в списке "Память"-->
+    <!-- TODO: Переделать журнал в ListBox, чтобы передавать объект (индекс), а не строку -->
+    <!-- TODO: Убрать рамку ListBoxItem -->
+
+    <Window.InputBindings>
+        <KeyBinding Command="{Binding DigitButtonPressCommand}" CommandParameter="0" Key="NumPad0"/>
+        <KeyBinding Command="{Binding DigitButtonPressCommand}" CommandParameter="1" Key="NumPad1"/>
+        <KeyBinding Command="{Binding DigitButtonPressCommand}" CommandParameter="2" Key="NumPad2"/>
+        <KeyBinding Command="{Binding DigitButtonPressCommand}" CommandParameter="3" Key="NumPad3"/>
+        <KeyBinding Command="{Binding DigitButtonPressCommand}" CommandParameter="4" Key="NumPad4"/>
+        <KeyBinding Command="{Binding DigitButtonPressCommand}" CommandParameter="5" Key="NumPad5"/>
+        <KeyBinding Command="{Binding DigitButtonPressCommand}" CommandParameter="6" Key="NumPad6"/>
+        <KeyBinding Command="{Binding DigitButtonPressCommand}" CommandParameter="7" Key="NumPad7"/>
+        <KeyBinding Command="{Binding DigitButtonPressCommand}" CommandParameter="8" Key="NumPad8"/>
+        <KeyBinding Command="{Binding DigitButtonPressCommand}" CommandParameter="9" Key="NumPad9"/>
+        <KeyBinding Command="{Binding PointButtonPressCommand}" CommandParameter="," Key="Decimal"/>
+
+        <KeyBinding Command="{Binding ArithmeticOperationButtonPressCommand}" CommandParameter="+" Key="Add"/>
+        <KeyBinding Command="{Binding ArithmeticOperationButtonPressCommand}" CommandParameter="-" Key="Subtract"/>
+        <KeyBinding Command="{Binding ArithmeticOperationButtonPressCommand}" CommandParameter="×" Key="Multiply"/>
+        <KeyBinding Command="{Binding ArithmeticOperationButtonPressCommand}" CommandParameter="÷" Key="Divide"/>
+
+        <KeyBinding Command="{Binding EqualButtonPressCommand}" Key="Return"/>
+
+        <KeyBinding Command="{Binding ClearButtonPressCommand}" CommandParameter="C" Key="Delete"/>
+    </Window.InputBindings>
+
+    <Window.Resources>
+        <Style x:Key="ButtonStandart" TargetType="Button" BasedOn="{StaticResource ButtonRevealStyle}">
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="BorderThickness" Value="0,0,2,2"/>
+            <Setter Property="Foreground" Value="#DDD"/>
+            <Setter Property="Focusable" Value="False"/>
+        </Style>
+        <Style x:Key="ButtonDigit" TargetType="Button" BasedOn="{StaticResource ButtonStandart}">
+            <Setter Property="Background" Value="#9000"/>
+            <Setter Property="Command" Value="{Binding DigitButtonPressCommand}"/>
+        </Style>
+        <Style x:Key="ButtonOperations" TargetType="Button" BasedOn="{StaticResource ButtonStandart}">
+            <Setter Property="Background" Value="#6000"/>
+        </Style>
+        <Style x:Key="ButtonMemoryOperations" TargetType="Button" BasedOn="{StaticResource ButtonOperations}">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="ButtonMemoryItemsOperations" TargetType="Button" BasedOn="{StaticResource ButtonOperations}">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="ButtonDisplay" TargetType="Button" BasedOn="{StaticResource ButtonRevealStyle}">
+            <Setter Property="Padding" Value="20, 0, 20, 0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Right"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Focusable" Value="False"/>
+        </Style>
+        <Style x:Key="ButtonDisplaySmall" TargetType="Button" BasedOn="{StaticResource ButtonRevealStyle}">
+            <Setter Property="Padding" Value="20, 0, 20, 0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Right"/>
+            <Setter Property="Foreground" Value="Gray"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Focusable" Value="False"/>
+        </Style>
+
+        <Style x:Key="ButtonJournal" TargetType="Button" BasedOn="{StaticResource ButtonRevealStyle}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="10, 0, 10, 0"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        <Style TargetType="ToolTip">
+            <Setter Property="Background" Value="#222"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#C333"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+
+        <Style x:Key="ListBoxJournal" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style x:Key="ListBoxJournalItem" TargetType="ListBoxItem">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Focusable" Value="True"/>
+
+        </Style>
+    </Window.Resources>
+
+    <Grid x:Name="MainWindow">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*"/>
+            <RowDefinition Height="4*"/>
+        </Grid.RowDefinitions>
+
+        <Grid x:Name="DisplaysArea" 
+              Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="3*"/>
+            </Grid.RowDefinitions>
+
+            <Button x:Name="DisplaySmall" 
+                    Grid.Row="0" Style="{StaticResource ButtonDisplaySmall}" ToolTip="Show/Hide journal"
+                    Command="{Binding ShowWindowButtonPressCommand}" 
+                    CommandParameter="{Binding ElementName=JournalArea}">
+                <Viewbox>
+                    <TextBlock Text="{Binding Path=Expression, Mode=TwoWay}"/>
+                </Viewbox>
+            </Button>
+            <Button x:Name="Display" 
+                    Grid.Row="1" ToolTip="Memory actions"
+                    Style="{StaticResource ButtonDisplay}"
+                    Command="{Binding ShowWindowButtonPressCommand}"
+                    CommandParameter="{Binding ElementName=MemoryArea}">
+
+                <Viewbox Grid.Row="0" Grid.RowSpan="2">
+
+                    <TextBlock>
+                        <TextBlock.Text>
+                            <Binding Path="Result" Mode="OneWay" NotifyOnValidationError="True">
+                                <Binding.ValidationRules>
+                                    <ExceptionValidationRule/>
+                                </Binding.ValidationRules>
+                            </Binding>
+                        </TextBlock.Text>
+                    </TextBlock>
+
+                </Viewbox>
+            </Button>
+        </Grid>
+
+        <Grid x:Name="KeyboardArea" 
+              Grid.Row="1">
+            <!--<Grid.BitmapEffect >
+                <BlurBitmapEffect Radius="30"/>
+            </Grid.BitmapEffect>-->
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+
+            <!--#region BUTTONS-->
+            <Button Content="0"
+                Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" 
+                CommandParameter="0"
+                Style="{StaticResource ButtonDigit}"/>
+            <Button Content="1" 
+                Grid.Row="3" Grid.Column="0" 
+                CommandParameter="1"
+                Style="{StaticResource ButtonDigit}"/>
+            <Button Content="2" 
+                Grid.Row="3" Grid.Column="1" 
+                CommandParameter="2"
+                Style="{StaticResource ButtonDigit}"/>
+            <Button Content="3" 
+                Grid.Row="3" Grid.Column="2" 
+                CommandParameter="3"
+                Style="{StaticResource ButtonDigit}"/>
+            <Button Content="4" 
+                Grid.Row="2" Grid.Column="0" 
+                CommandParameter="4"
+                Style="{StaticResource ButtonDigit}"/>
+            <Button Content="5" 
+                Grid.Row="2" Grid.Column="1" 
+                CommandParameter="5"
+                Style="{StaticResource ButtonDigit}"/>
+            <Button Content="6" 
+                Grid.Row="2" Grid.Column="2" 
+                CommandParameter="6"
+                Style="{StaticResource ButtonDigit}"/>
+            <Button Content="7"
+                Grid.Row="1" Grid.Column="0" 
+                CommandParameter="7"
+                Style="{StaticResource ButtonDigit}"/>
+            <Button Content="8" 
+                Grid.Row="1" Grid.Column="1" 
+                CommandParameter="8"
+                Style="{StaticResource ButtonDigit}"/>
+            <Button Content="9" 
+                Grid.Row="1" Grid.Column="2" 
+                CommandParameter="9"
+                Style="{StaticResource ButtonDigit}"/>
+            <Button Content=","
+                    Command="{Binding PointButtonPressCommand}"
+                    Grid.Row="4" Grid.Column="2" 
+                    Style="{StaticResource ButtonDigit}"/>
+
+            <Button Content="+" 
+                    Command="{Binding ArithmeticOperationButtonPressCommand}" CommandParameter="+"
+                    Grid.Row="3" Grid.Column="3" 
+                    Style="{StaticResource ButtonOperations}"/>
+            <Button Content="-" 
+                    Command="{Binding ArithmeticOperationButtonPressCommand}" CommandParameter="-"
+                    Grid.Row="2" Grid.Column="3" 
+                    Style="{StaticResource ButtonOperations}"/>
+            <Button Content="×" 
+                    Command="{Binding ArithmeticOperationButtonPressCommand}" CommandParameter="×"
+                    Grid.Row="1" Grid.Column="3" 
+                    Style="{StaticResource ButtonOperations}"/>
+            <Button Content="÷" 
+                    Command="{Binding ArithmeticOperationButtonPressCommand}" CommandParameter="÷"
+                    Grid.Row="0" Grid.Column="3"
+                    Style="{StaticResource ButtonOperations}"/>
+
+            <Button Content="="
+                    Command="{Binding EqualButtonPressCommand}"
+                    Grid.Row="4" Grid.Column="3" 
+                    Style="{StaticResource ButtonOperations}"/>
+            <Button Content="+/-"
+                    Command="{Binding InvertButtonPressCommand}"
+                    Grid.Row="0" Grid.Column="1" 
+                    Style="{StaticResource ButtonOperations}"/>
+            <Button Content="%"
+                    Command="{Binding PercentButtonPressCommand}"
+                    Grid.Row="0" Grid.Column="2" 
+                    Style="{StaticResource ButtonOperations}"/>
+
+            <Button Content="CE/C"
+                    Style="{StaticResource ButtonOperations}"
+                    Command="{Binding ClearButtonPressCommand}"
+                    Grid.Row="0" Grid.Column="0"/>
+            <!--#endregion-->
+        </Grid>
+
+        <Grid x:Name="JournalArea" 
+              Grid.Row="1" Visibility="Collapsed" Background="#E000">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="10*"/>
+            </Grid.RowDefinitions>
+
+            <Button Grid.Row="0"
+                    Content="&gt; Journal &lt;" ToolTip="Clear journal"
+                    Style="{StaticResource ButtonJournal}"
+                    Command="{Binding JournalClearButtonPressCommand}"/>
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden">
+                <ItemsControl x:Name="JournalItems" ItemsSource="{Binding Journal}" Padding="10">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" 
+                                    Style="{StaticResource ButtonJournal}" 
+                                    Command="{Binding ElementName=JournalItems, Path=DataContext.JournalRecallButtonPressCommand}" 
+                                    CommandParameter="{Binding}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="10*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" 
+                                           Text="{Binding Item1}" Foreground="Gray"
+                                           HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" 
+                                           Text="{Binding Item2}" Foreground="Gray"
+                                           HorizontalAlignment="Right" TextWrapping="Wrap"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" 
+                                           Text="{Binding Item3}" Foreground="White"
+                                           HorizontalAlignment="Right" FontSize="24" TextWrapping="Wrap"/>
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+
+        <Grid x:Name="MemoryArea"
+              Grid.Row="1" Visibility="Collapsed" Background="#E000">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="9*"/>
+            </Grid.RowDefinitions>
+
+            <Button Grid.Row="0"
+                    Content="&gt; Memory &lt;" ToolTip="Memory clear all"
+                    Style="{StaticResource ButtonJournal}"
+                    Command="{Binding MemoryClearAllButtonPressCommand}"/>
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+
+                <Button Content="MR" 
+                        ToolTip="Recall last added number from memory"
+                        Grid.Column="0" 
+                        Style="{StaticResource ButtonMemoryOperations}"
+                        Command="{Binding MemoryRecallLastButtonPressCommand}"/>
+                <Button Content="+M" 
+                        ToolTip="Add last added number to memory to number"
+                        Grid.Column="1" Style="{StaticResource ButtonMemoryOperations}"
+                        Command="{Binding MemoryAddLastButtonPressCommand}"/>
+                <Button Content="-M" 
+                        ToolTip="Subtract last added number to memory from number"
+                        Grid.Column="2" Style="{StaticResource ButtonMemoryOperations}"
+                        Command="{Binding MemorySubtractLastButtonPressCommand}"/>
+                <Button Content="MS" 
+                        ToolTip="Save number to memory"
+                        Grid.Column="3" 
+                        Style="{StaticResource ButtonMemoryOperations}"
+                        Command="{Binding MemorySaveButtonPressCommand}"/>
+            </Grid>
+
+            <ListBox x:Name="MemoryItems" 
+                     Grid.Row="2" Padding="10"
+                     ItemsSource="{Binding Memory}" 
+                     Style="{StaticResource ListBoxJournal}" ItemContainerStyle="{StaticResource ListBoxJournalItem}"
+                     ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Button ToolTip="Memory recall"
+                                FontSize="32"
+                                HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" 
+                                Style="{StaticResource ButtonJournal}"
+                                Command="{Binding ElementName=MemoryItems, Path=DataContext.MemoryRecallButtonPressCommand}"
+                                CommandParameter="{Binding ElementName=MemoryItems, Path=SelectedIndex}">
+
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" 
+                                           Text="{Binding}" TextAlignment="Right" TextWrapping="Wrap"/>
+                                <Grid x:Name="MemoryOperations" 
+                                      Grid.Row="1" Margin="5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="5*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Button Content="MC" 
+                                            ToolTip="Delete number from memory" Grid.Column="1" 
+                                            Style="{StaticResource ButtonMemoryItemsOperations}"
+                                            Command="{Binding ElementName=MemoryItems, Path=DataContext.MemoryClearButtonPressCommand}"
+                                            CommandParameter="{Binding ElementName=MemoryItems, Path=SelectedIndex}"/>
+                                    <Button Content="M+" 
+                                            ToolTip="Add number to memory"
+                                            Grid.Column="2" 
+                                            Style="{StaticResource ButtonMemoryItemsOperations}"
+                                            Command="{Binding ElementName=MemoryItems, Path=DataContext.MemoryAddButtonPressCommand}"
+                                            CommandParameter="{Binding ElementName=MemoryItems, Path=SelectedIndex}"/>
+                                    <Button Content="M-" 
+                                            ToolTip="Subtract number from memory"
+                                            Grid.Column="3" 
+                                            Style="{StaticResource ButtonMemoryItemsOperations}"
+                                            Command="{Binding ElementName=MemoryItems, Path=DataContext.MemorySubtractButtonPressCommand}"
+                                            CommandParameter="{Binding ElementName=MemoryItems, Path=SelectedIndex}"/>
+                                </Grid>
+                            </Grid>
+                        </Button>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+    </Grid>
+
+</fw:AcrylicWindow>
