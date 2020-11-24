@@ -5,7 +5,9 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System;
 using System.IO;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+
 
 namespace Calculator
 {
@@ -16,7 +18,6 @@ namespace Calculator
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
 
         public string this[string columnName]
         {
@@ -40,8 +41,22 @@ namespace Calculator
             _result = "0";
             _expression = string.Empty;
             LastOperation = "=";
-            Journal = new ObservableCollection<Tuple<string, string, string>>();
-            Memory = new ObservableCollection<string>();
+            try
+            {
+                Journal = JsonSerializer.Deserialize<ObservableCollection<JournalCalcItem>>(File.ReadAllText("Journal.json"));
+            }
+            catch
+            {
+                Journal = new ObservableCollection<JournalCalcItem>();
+            }
+            try
+            {
+                Memory = JsonSerializer.Deserialize<ObservableCollection<MemoryCalcItem>>(File.ReadAllText("Memory.json"));
+            }
+            catch 
+            {
+                Memory = new ObservableCollection<MemoryCalcItem>();
+            }
         }
 
         private string _result;
@@ -69,16 +84,17 @@ namespace Calculator
             get;
             set;
         }
-        public ObservableCollection<Tuple<string, string, string>> Journal
+        public ObservableCollection<JournalCalcItem> Journal
         {
             get;
             set;
         }
-        public ObservableCollection<string> Memory
+        public ObservableCollection<MemoryCalcItem> Memory
         {
             get;
             set;
         }
+
 
 
         #region Numbers ICommands
@@ -108,7 +124,7 @@ namespace Calculator
                 Result += digit;
             }
 
-            LastOperation = "Number";
+            LastOperation = "Id";
         }
 
         //  Запятая
@@ -132,7 +148,7 @@ namespace Calculator
             {
                 Result += ",";
             }
-            LastOperation = "Number";
+            LastOperation = "Id";
         }
         #endregion
 
@@ -156,7 +172,7 @@ namespace Calculator
             {
                 Expression = string.Empty;
             }
-            if (LastOperation == "Number" || LastOperation == "=")
+            if (LastOperation == "Id" || LastOperation == "=")
             {
                 Expression += $"{Result} {operation} ";
                 Result = "0";
@@ -194,7 +210,9 @@ namespace Calculator
                 Expression += $"{Result} ";
                 Result = CalcModel.Calculate(Expression);
                 Expression += "=";
-                Journal.Insert(0, Tuple.Create($"{Journal.Count + 1}.", Expression, Result));
+                Journal.Insert(0, new JournalCalcItem(Journal.Count + 1, Expression, Result));
+
+                File.WriteAllText("Journal.json", JsonSerializer.Serialize(Journal, new JsonSerializerOptions { WriteIndented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
             }
             LastOperation = "=";
         }
@@ -290,6 +308,8 @@ namespace Calculator
         public void JournalClearButtonPress()
         {
             Journal.Clear();
+
+            File.WriteAllText("Journal.json", "");
         }
 
         private ICommand _journalRecallButtonPressCommand;
@@ -297,13 +317,13 @@ namespace Calculator
         {
             get
             {
-                return _journalRecallButtonPressCommand ??= new RelayCommand<Tuple<string, string, string>>(JournalRecallButtonPress, result => true);
+                return _journalRecallButtonPressCommand ??= new RelayCommand<JournalCalcItem>(JournalRecallButtonPress, journalItem => true);
             }
         }
-        public void JournalRecallButtonPress(Tuple<string, string, string> result)
+        public void JournalRecallButtonPress(JournalCalcItem journalItem)
         {
-            Result = result.Item3;
-            Expression = result.Item2;
+            Result = journalItem.Result;
+            Expression = journalItem.Expression;
             LastOperation = "=";
         }
         #endregion
@@ -326,12 +346,12 @@ namespace Calculator
             }
             if (Memory.Count != 0)
             {
-                Result = Memory[0];
-                LastOperation = "Number";
+                Result = Memory[0].Number;
+                LastOperation = "Id";
             }
         }
 
-        //  Добавить к значению на дисплее последний добавленный элемент в память (Result + Memory[0])
+        //  Добавить к значению на дисплее последний добавленный элемент в память (Result += Memory[0])
         private ICommand _memoryAddLastButtonPressCommand;
         public ICommand MemoryAddLastButtonPressCommand
         {
@@ -344,11 +364,11 @@ namespace Calculator
         {
             if (Memory.Count != 0)
             {
-                Result = CalcModel.Calculate($"{Result} + {Memory[0]}");
+                Result = CalcModel.Calculate($"{Result} + {Memory[0].Number}");
             }
         }
 
-        //  Вычесть из значения на дисплее последний добавленный элемент в память (Result - Memory[0])
+        //  Вычесть из значения на дисплее последний добавленный элемент в память (Result -= Memory[0])
         private ICommand _memorySubtractLastButtonPressCommand;
         public ICommand MemorySubtractLastButtonPressCommand
         {
@@ -361,7 +381,7 @@ namespace Calculator
         {
             if (Memory.Count != 0)
             {
-                Result = CalcModel.Calculate($"{Result} - {Memory[0]}");
+                Result = CalcModel.Calculate($"{Result} - {Memory[0].Number}");
             }
         }
 
@@ -376,7 +396,9 @@ namespace Calculator
         }
         public void MemorySaveButtonPress()
         {
-            Memory.Insert(0, Result);
+            Memory.Insert(0, new MemoryCalcItem(Memory.Count + 1, Result));
+
+            File.WriteAllText("Memory.json", JsonSerializer.Serialize(Memory, new JsonSerializerOptions { WriteIndented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
         }
 
         //  Полная очистка памяти
@@ -391,6 +413,8 @@ namespace Calculator
         public void MemoryClearAllButtonPress()
         {
             Memory.Clear();
+
+            File.WriteAllText("Memory.json", string.Empty);
         }
 
 
@@ -407,8 +431,8 @@ namespace Calculator
         {
             if (index != -1)
             {
-                Result = Memory[index];
-                LastOperation = "Number";
+                Result = Memory[index].Number;
+                LastOperation = "Id";
             }
         }
 
@@ -427,9 +451,11 @@ namespace Calculator
             {
                 Memory.RemoveAt(index);
             }
+
+            File.WriteAllText("Memory.json", JsonSerializer.Serialize(Memory, new JsonSerializerOptions { WriteIndented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
         }
 
-        //  Добавить число на дисплее к ячейке памяти
+        //  Добавить число на дисплее к ячейке памяти (Memory[index] += Result)
         private ICommand _memoryAddButtonPressCommand;
         public ICommand MemoryAddButtonPressCommand
         {
@@ -442,11 +468,13 @@ namespace Calculator
         {
             if (index != -1)
             {
-                Memory[index] = CalcModel.Calculate($"{Memory[index]} + {Result}");
+                Memory[index].Number = CalcModel.Calculate($"{Memory[index].Number} + {Result}");
+
+                File.WriteAllText("Memory.json", JsonSerializer.Serialize(Memory, new JsonSerializerOptions { WriteIndented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
             }
         }
 
-        //  Вычесть число на дисплее из ячейки памяти
+        //  Вычесть число на дисплее из ячейки памяти (Memory[index] -= Result)
         private ICommand _memorySubtractButtonPressCommand;
         public ICommand MemorySubtractButtonPressCommand
         {
@@ -459,7 +487,9 @@ namespace Calculator
         {
             if (index != -1)
             {
-                Memory[index] = CalcModel.Calculate($"{Memory[index]} - {Result}");
+                Memory[index].Number = CalcModel.Calculate($"{Memory[index].Number} - {Result}");
+
+                File.WriteAllText("Memory.json", JsonSerializer.Serialize(Memory, new JsonSerializerOptions { WriteIndented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
             }
         }
         #endregion
