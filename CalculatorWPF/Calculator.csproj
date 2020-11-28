@@ -7,7 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.0.78" />
     <PackageReference Include="FluentWPF" Version="0.8.0" />
+    <PackageReference Include="System.Data.SQLite" Version="1.0.113.6" />
   </ItemGroup>
 
   <ItemGroup>
