@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using System.IO;
 
 namespace Calculator
 {
@@ -36,29 +35,6 @@ namespace Calculator
         }
         public string Error => null;
 
-        public CalcViewModel()
-        {
-            _result = "0";
-            _expression = string.Empty;
-            LastOperation = "=";
-
-            #region Journal
-            Journal = new CalcCollectionJson<JournalCalcItem>("Journal.json");
-            if (Journal.TryLoad())
-            {
-                Journal.Collection = Journal.Load();
-            }
-            #endregion
-
-            #region Memory
-            Memory = new CalcCollectionJson<MemoryCalcItem>("Memory.json");
-            if (Memory.TryLoad())
-            {
-                Memory.Collection = Memory.Load();
-            }
-            #endregion
-        }
-
         private string _result;
         public string Result
         {
@@ -84,18 +60,39 @@ namespace Calculator
             get;
             set;
         }
-        public CalcCollectionJson<JournalCalcItem> Journal
+        public CalcCollectionDb<JournalCalcItem> Journal
         {
             get;
             set;
         }
-        public CalcCollectionJson<MemoryCalcItem> Memory
+        public CalcCollectionDb<MemoryCalcItem> Memory
         {
             get;
             set;
         }
-        
 
+        public CalcViewModel()
+        {
+            Result = "0";
+            Expression = string.Empty;
+            LastOperation = "=";
+
+            #region Journal
+            Journal = new CalcCollectionDb<JournalCalcItem>("Calculator", "Journal");
+            if (Journal.TryLoad())
+            {
+                Journal.Collection = Journal.Load();
+            }
+            #endregion
+
+            #region Memory
+            Memory = new CalcCollectionDb<MemoryCalcItem>("Calculator", "Memory");
+            if (Memory.TryLoad())
+            {
+                Memory.Collection = Memory.Load();
+            }
+            #endregion
+        }
 
         #region Numbers ICommands
         //  Цифры
@@ -210,8 +207,7 @@ namespace Calculator
                 Result = CalcModel.Calculate(Expression);
                 Expression += "=";
 
-                Journal.Collection.Insert(0, new JournalCalcItem(Journal.Collection.Count + 1, Expression, Result));
-                Journal.Save();
+                Journal.Add(new JournalCalcItem(Expression, Result));
             }
             LastOperation = "=";
         }
@@ -287,8 +283,7 @@ namespace Calculator
         }
         public void JournalClearButtonPress()
         {
-            Journal.Collection.Clear();
-            Journal.Save();
+            Journal.Clear();
         }
 
         private ICommand _journalRecallButtonPressCommand;
@@ -382,8 +377,7 @@ namespace Calculator
         }
         public void MemorySaveButtonPress()
         {
-            Memory.Collection.Insert(0, new MemoryCalcItem(Memory.Collection.Count + 1, Result));
-            Memory.Save();
+            Memory.Add(new MemoryCalcItem(Result));
         }
 
         //  Полная очистка памяти
@@ -397,8 +391,7 @@ namespace Calculator
         }
         public void MemoryClearAllButtonPress()
         {
-            Memory.Collection.Clear();
-            Memory.Save();
+            Memory.Clear();
         }
 
 
@@ -432,13 +425,7 @@ namespace Calculator
         }
         public void MemoryClearButtonPress(MemoryCalcItem memoryItem)
         {
-            Memory.Collection.Remove(memoryItem);
-            for (int i = 0; i < Memory.Collection.Count; i++)
-            {
-                Memory.Collection[i].Id = Memory.Collection.Count - i;
-            }
-
-            Memory.Save();
+            Memory.Remove(memoryItem);
         }
 
         //  Добавить число на дисплее к ячейке памяти (Memory[index] += Result)
@@ -452,8 +439,7 @@ namespace Calculator
         }
         public void MemoryAddButtonPress(MemoryCalcItem memoryItem)
         {
-            Memory.Collection[Memory.Collection.IndexOf(memoryItem)].Number = CalcModel.Calculate($"{memoryItem.Number} + {Result}");
-            Memory.Save();
+            Memory.ChangeValue(memoryItem, "Number", CalcModel.Calculate($"{memoryItem.Number} + {Result}"));
         }
 
         //  Вычесть число на дисплее из ячейки памяти (Memory[index] -= Result)
@@ -467,8 +453,7 @@ namespace Calculator
         }
         public void MemorySubtractButtonPress(MemoryCalcItem memoryItem)
         {
-            Memory.Collection[Memory.Collection.IndexOf(memoryItem)].Number = CalcModel.Calculate($"{memoryItem.Number} - {Result}");
-            Memory.Save();
+            Memory.ChangeValue(memoryItem, "Number", CalcModel.Calculate($"{memoryItem.Number} - {Result}"));
         }
         #endregion
     }
