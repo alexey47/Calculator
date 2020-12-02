@@ -4,9 +4,13 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net5.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
-    <VersionPrefix>20.11</VersionPrefix>
+    <VersionPrefix>02.12</VersionPrefix>
     <VersionSufix>b</VersionSufix>
-    <ApplicationIcon></ApplicationIcon>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <WarningLevel>5</WarningLevel>
+    <GenerateSerializationAssemblies></GenerateSerializationAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
