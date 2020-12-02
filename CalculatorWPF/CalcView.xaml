@@ -9,8 +9,7 @@
     xmlns:fw="clr-namespace:SourceChord.FluentWPF;assembly=FluentWPF"
     d:DataContext="{d:DesignInstance Type=local:CalcViewModel}"
     mc:Ignorable="d"
-    Height="476" 
-    Width="302" 
+    Height="476" Width="302" 
     ResizeMode="CanMinimize"
     Background="#C333"
     TextOptions.TextRenderingMode="ClearType"
@@ -50,8 +49,8 @@
     <Window.Resources>
         <Style x:Key="ButtonStandart" TargetType="Button" BasedOn="{StaticResource ButtonRevealStyle}">
             <Setter Property="FontSize" Value="24"/>
-            <Setter Property="BorderThickness" Value="0,0,2,2"/>
-            <Setter Property="Foreground" Value="#DDD"/>
+            <Setter Property="BorderThickness" Value="1,1,1,1"/>
+            <Setter Property="Foreground" Value="#BBB"/>
             <Setter Property="Focusable" Value="False"/>
         </Style>
         <Style x:Key="ButtonDigit" TargetType="Button" BasedOn="{StaticResource ButtonStandart}">
@@ -343,7 +342,8 @@
 
                                     <TextBlock Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" 
                                            Text="{Binding Id}" Foreground="Gray"
-                                           HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                           HorizontalAlignment="Left" VerticalAlignment="Center" 
+                                           ToolTip="{Binding Id}"/>
                                     <TextBlock Grid.Row="0" Grid.Column="1" 
                                            Text="{Binding Expression}" Foreground="Gray"
                                            HorizontalAlignment="Right" TextWrapping="Wrap"/>

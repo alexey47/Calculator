@@ -6,6 +6,12 @@ namespace Calculator
 {
     public class CalcModel
     {
+        /// <summary>
+        /// Expression format: <i>N O N [O N ... O N]</i> (N - number, O - operation).<br/>
+        /// Available operations: <i>+, -, *, / </i>.<br/>
+        /// </summary>
+        /// <param name="expression"></param>
+        /// <returns>Expression result (string)</returns>
         public static string Calculate(string expression)
         {
             expression = expression.Replace('×', '*').Replace('÷', '/');
@@ -49,6 +55,12 @@ namespace Calculator
             }
             return exp[^1];
         }
+        /// <summary>
+        /// Percent.
+        /// </summary>
+        /// <param name="number"></param>
+        /// <param name="part"></param>
+        /// <returns>Part of number (string)</returns>
         public static string Percent(string number, string part)
         {
             if (number.Length == 0)
@@ -74,6 +86,11 @@ namespace Calculator
 
             return (double.Parse(number) * double.Parse(part) * 0.01).ToString(CultureInfo.CurrentCulture);
         }
+        /// <summary>
+        /// Number inversion.
+        /// </summary>
+        /// <param name="number"></param>
+        /// <returns>Inverted number (string)</returns>
         public static string Invert(string number)
         {
             if (double.TryParse(number, out _))
@@ -84,15 +101,26 @@ namespace Calculator
             return (-double.Parse(number)).ToString(CultureInfo.CurrentCulture);
         }
 
+        /// <summary>
+        /// Try to transform "smoker's number" to "normal number".
+        /// </summary>
+        /// <param name="number"></param>
+        /// <returns>Success: number<br/>
+        ///          Fail: 0</returns>
         private static string NormalizeNumber(string number)
         {
+            if (number == string.Empty)
+            {
+                return "0";
+            }
+
             char[] digits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
             int firstDigitIdx = number.IndexOfAny(digits);
 
             if (firstDigitIdx != -1)
             {
                 #region IsNegative
-                
+
                 int minusIdx = number.IndexOf('-', 0, firstDigitIdx);
                 bool isNegative = minusIdx != -1;
 
@@ -134,6 +162,7 @@ namespace Calculator
                 bool isDouble = pointIdx != -1;
 
                 #endregion
+
                 #region NewPositions
 
                 int expNewIdx = 0;
@@ -181,11 +210,7 @@ namespace Calculator
                     number = number.Insert(0, "-");
                 }
             }
-
-            if (number == string.Empty)
-            {
-                number = "0";
-            }
+            
             return double.TryParse(number, out _) ? number : "0";
         }
     }
