@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Data.SQLite;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using Dapper;
 
 namespace Calculator
@@ -39,7 +40,7 @@ namespace Calculator
         }
 
         public abstract string ToText();
-        public abstract void FromText(string text);
+        public abstract bool FromText(string text);
     }
     public class JournalCalcItem : CalcItem
     {
@@ -69,14 +70,22 @@ namespace Calculator
         {
             return $"{Date}\x1F{Id}\x1F{Expression}\x1F{Result}";
         }
-        public override void FromText(string text)
+        public override bool FromText(string text)
         {
-            string[] textSplit = text.Split("\x1F");
+            try
+            {
+                string[] textSplit = text.Split("\x1F");
 
-            Date = textSplit[0];
-            Id = textSplit[1];
-            Expression = textSplit[2];
-            Result = textSplit[3];
+                Date = textSplit[0];
+                Id = textSplit[1];
+                Expression = textSplit[2];
+                Result = textSplit[3];
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
     public class MemoryCalcItem : CalcItem
@@ -105,13 +114,21 @@ namespace Calculator
         {
             return $"{Date}\x1F{Id}\x1F{Number}";
         }
-        public override void FromText(string text)
+        public override bool FromText(string text)
         {
-            string[] textSplit = text.Split("\x1F");
+            try
+            {
+                string[] textSplit = text.Split("\x1F");
 
-            Date = textSplit[0];
-            Id = textSplit[1];
-            Number = textSplit[2];
+                Date = textSplit[0];
+                Id = textSplit[1];
+                Number = textSplit[2];
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 
@@ -144,14 +161,19 @@ namespace Calculator
         {
             FileName = fileName + ".txt";
             Collection = new ObservableCollection<TCalcItem>();
+
+            if (!File.Exists(FileName))
+            {
+                File.Create(FileName);
+            }
         }
 
         public bool TryLoad()
         {
             try
             {
-                var text = File.ReadAllText(FileName).Split('\n');
-                foreach (var calcItemTxt in text)
+                string[] text = File.ReadAllText(FileName).Split('\n');
+                foreach (string calcItemTxt in text)
                 {
                     if (calcItemTxt != string.Empty)
                     {
@@ -170,13 +192,15 @@ namespace Calculator
             string[] text = File.ReadAllText(FileName).Split('\n');
             ObservableCollection<TCalcItem> collection = new ObservableCollection<TCalcItem>();
 
-            foreach (var calcItemTxt in text)
+            foreach (string calcItemTxt in text)
             {
                 if (calcItemTxt != string.Empty)
                 {
-                    var calcItem = new TCalcItem();
-                    calcItem.FromText(calcItemTxt);
-                    collection.Add(calcItem);
+                    TCalcItem calcItem = new TCalcItem();
+                    if (calcItem.FromText(calcItemTxt))
+                    {
+                        collection.Add(calcItem);
+                    }
                 }
             }
             collection = new ObservableCollection<TCalcItem>(collection.OrderByDescending(item => item.Date));
@@ -190,7 +214,7 @@ namespace Calculator
         private void Update()
         {
             string text = string.Empty;
-            foreach (var calcItem in Collection)
+            foreach (TCalcItem calcItem in Collection)
             {
                 text += $"{calcItem.ToText()}\n";
             }
@@ -243,13 +267,18 @@ namespace Calculator
         {
             FileName = fileName + ".json";
             Collection = new ObservableCollection<TCalcItem>();
+
+            if (!File.Exists(FileName))
+            {
+                File.Create(FileName);
+            }
         }
 
         public bool TryLoad()
         {
             try
             {
-                var json = File.ReadAllText(FileName);
+                string json = File.ReadAllText(FileName);
                 JsonSerializer.Deserialize<ObservableCollection<TCalcItem>>(json);
                 return true;
             }
@@ -260,8 +289,8 @@ namespace Calculator
         }
         public ObservableCollection<TCalcItem> Load()
         {
-            var json = File.ReadAllText(FileName);
-            var collection = JsonSerializer.Deserialize<ObservableCollection<TCalcItem>>(json);
+            string json = File.ReadAllText(FileName);
+            ObservableCollection<TCalcItem> collection = JsonSerializer.Deserialize<ObservableCollection<TCalcItem>>(json);
             collection = new ObservableCollection<TCalcItem>(collection!.OrderByDescending(item => item.Date));
             for (int i = 0; i < collection.Count; i++)
             {
@@ -272,12 +301,12 @@ namespace Calculator
         }
         private void Update()
         {
-            var jsonOptions = new JsonSerializerOptions
+            JsonSerializerOptions jsonOptions = new JsonSerializerOptions
             {
                 WriteIndented = true,
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             };
-            var json = JsonSerializer.Serialize(Collection, jsonOptions);
+            string json = JsonSerializer.Serialize(Collection, jsonOptions);
 
             File.WriteAllText(FileName, json);
         }
@@ -337,9 +366,8 @@ namespace Calculator
             {
                 SQLiteConnection.CreateFile(DataBaseName);
             }
-            var properties = typeof(TCalcItem).GetProperties();
-            using var dataBase = new SQLiteConnection($"Data Source={DataBaseName}; Version=3");
-            dataBase.Open();
+            PropertyInfo[] properties = typeof(TCalcItem).GetProperties();
+            using SQLiteConnection dataBase = new SQLiteConnection($"Data Source={DataBaseName}; Version=3");
 
             string command = @$"Create table if not exists {TableName}(";
             for (int i = 0; i < properties.Length; i++)
@@ -357,14 +385,13 @@ namespace Calculator
             command += ")";
 
             dataBase.Query(command);
-            dataBase.Close();
         }
 
         public bool TryLoad()
         {
             try
             {
-                using var connection = new SQLiteConnection($"Data Source={DataBaseName}; Version=3");
+                using SQLiteConnection connection = new SQLiteConnection($"Data Source={DataBaseName}; Version=3");
                 connection.Open();
                 connection.Close();
                 return true;
@@ -379,13 +406,11 @@ namespace Calculator
             ObservableCollection<TCalcItem> collection = new ObservableCollection<TCalcItem>();
             using SQLiteConnection dataBase = new SQLiteConnection($"Data Source={DataBaseName}; Version=3");
 
-            dataBase.Open();
             IEnumerable<TCalcItem> calcItems = dataBase.Query<TCalcItem>($"Select * from {TableName}");
             foreach (TCalcItem calcItem in calcItems)
             {
                 collection.Insert(0, calcItem);
             }
-            dataBase.Close();
 
             for (int i = 0; i < collection.Count; i++)
             {
@@ -400,12 +425,11 @@ namespace Calculator
             item.Id = Collection.Count.ToString();
 
             using SQLiteConnection dataBase = new SQLiteConnection($"Data Source={DataBaseName}; Version=3");
-            var properties = typeof(TCalcItem).GetProperties();
-            dataBase.Open();
+            PropertyInfo[] properties = typeof(TCalcItem).GetProperties();
 
             //  command: Перечисление всех полей класса и запись в SQL запрос:
             //      "Insert into {TableName}(properties[i], properties[i + 1], ..., properties[n])
-            //       Value($properties[i], $properties[i + 1], ..., properties[n],)";
+            //       Value($properties[i], $properties[i + 1], ..., $properties[n],)";
             string command = @$"Insert into {TableName}(";
             for (int i = 0; i < properties.Length; i++)
             {
@@ -416,7 +440,7 @@ namespace Calculator
                 }
             }
             command += ") Values(";
-            var parameters = new DynamicParameters();
+            DynamicParameters parameters = new DynamicParameters();
             for (int i = 0; i < properties.Length; i++)
             {
                 command += $"${properties[i].Name}";
@@ -429,7 +453,6 @@ namespace Calculator
             command += ")";
 
             dataBase.Query<TCalcItem>(command, parameters);
-            dataBase.Close();
         }
         public void Remove(TCalcItem item)
         {
@@ -440,7 +463,6 @@ namespace Calculator
             }
 
             using SQLiteConnection dataBase = new SQLiteConnection($"Data Source={DataBaseName}; Version=3");
-            dataBase.Open();
             dataBase.Query(@$"Delete from {TableName}
                                   Where Id = {item.Id}");
             for (int i = int.Parse(item.Id) + 1; i <= Collection.Count + 1; i++)
@@ -448,26 +470,21 @@ namespace Calculator
                 dataBase.Query(@$"Update {TableName}
                                       Set Id = {i - 1} where Id = {i}");
             }
-            dataBase.Close();
         }
         public void Clear()
         {
             Collection.Clear();
 
             using SQLiteConnection dataBase = new SQLiteConnection($"Data Source={DataBaseName}; Version=3");
-            dataBase.Open();
             dataBase.Query($"Delete from {TableName}");
-            dataBase.Close();
         }
         public void ChangeValue(TCalcItem item, string propertyName, string newValue)
         {
             Collection[Collection.IndexOf(item)].GetType().GetProperty(propertyName)?.SetValue(item, newValue);
 
             using SQLiteConnection dataBase = new SQLiteConnection($"Data Source={DataBaseName}; Version=3");
-            dataBase.Open();
             dataBase.Query(@$"Update {TableName}
-                                 Set {propertyName} = {newValue} where Id = {item.Id}");
-            dataBase.Close();
+                                  Set {propertyName} = {newValue} where Id = {item.Id}");
         }
     }
 }
