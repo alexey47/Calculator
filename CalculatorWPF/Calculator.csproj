@@ -6,7 +6,7 @@
     <UseWPF>true</UseWPF>
     <VersionPrefix>02.12</VersionPrefix>
     <VersionSufix>b</VersionSufix>
-    <ApplicationIcon></ApplicationIcon>
+    <ApplicationIcon>Icons\Calculator.ico</ApplicationIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
