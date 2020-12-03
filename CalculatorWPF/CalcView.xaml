@@ -11,15 +11,15 @@
     mc:Ignorable="d"
     Height="476" Width="302" 
     ResizeMode="CanMinimize"
-    Background="#C333"
+    Background="{DynamicResource SystemAltMediumColorBrush}"
     TextOptions.TextRenderingMode="ClearType"
     FontFamily="./Fonts/#Lato"
     FontWeight="Thin"
     AcrylicWindowStyle="NoIcon"
-    FallbackColor="#7000"
+    FallbackColor="{DynamicResource SystemAltLowColor}"
     NoiseOpacity="0.01"
     fw:PointerTracker.Enabled="True"
-    BorderBrush="Transparent">
+    BorderBrush="{DynamicResource SystemAltLowColorBrush}">
 
     <Window.InputBindings>
         <KeyBinding Command="{Binding DigitButtonPressCommand}" CommandParameter="0" Key="NumPad0"/>
@@ -50,15 +50,15 @@
         <Style x:Key="ButtonStandart" TargetType="Button" BasedOn="{StaticResource ButtonRevealStyle}">
             <Setter Property="FontSize" Value="24"/>
             <Setter Property="BorderThickness" Value="1,1,1,1"/>
-            <Setter Property="Foreground" Value="#BBB"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemBaseMediumColorBrush}"/>
             <Setter Property="Focusable" Value="False"/>
         </Style>
         <Style x:Key="ButtonDigit" TargetType="Button" BasedOn="{StaticResource ButtonStandart}">
-            <Setter Property="Background" Value="#6000"/>
+            <Setter Property="Background" Value="{DynamicResource SystemAltMediumHighColorBrush}"/>
             <Setter Property="Command" Value="{Binding DigitButtonPressCommand}"/>
         </Style>
         <Style x:Key="ButtonOperations" TargetType="Button" BasedOn="{StaticResource ButtonStandart}">
-            <Setter Property="Background" Value="#3000"/>
+            <Setter Property="Background" Value="{DynamicResource SystemAltMediumColorBrush}"/>
         </Style>
         <Style x:Key="ButtonMemoryOperations" TargetType="Button" BasedOn="{StaticResource ButtonOperations}">
             <Setter Property="FontSize" Value="14"/>
@@ -72,7 +72,7 @@
         <Style x:Key="ButtonDisplay" TargetType="Button" BasedOn="{StaticResource ButtonRevealStyle}">
             <Setter Property="Padding" Value="20, 0, 20, 0"/>
             <Setter Property="HorizontalContentAlignment" Value="Right"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemBaseMediumHighColorBrush}"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Focusable" Value="False"/>
         </Style>
@@ -91,15 +91,10 @@
             <Setter Property="Focusable" Value="False"/>
         </Style>
         <Style TargetType="ToolTip">
-            <Setter Property="Background" Value="#222"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="#C333"/>
+            <Setter Property="Background" Value="{DynamicResource SystemAltHighColorBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemBaseHighColorBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemAltHighColorBrush}"/>
             <Setter Property="BorderThickness" Value="2"/>
-        </Style>
-
-        <Style x:Key="ItemsControlJournal" TargetType="ItemsControl">
-            <!--<Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>-->
         </Style>
 
         <ControlTemplate x:Key="ValidationFailed">
@@ -119,7 +114,7 @@
                                         <LinearColorKeyFrame Value="Red" KeyTime="0:0:1.5"/>
                                         <LinearColorKeyFrame Value="Transparent" KeyTime="0:0:2"/>
                                         <LinearColorKeyFrame Value="Red" KeyTime="0:0:2.5"/>
-                                        <LinearColorKeyFrame Value="DimGray" KeyTime="0:0:4"/>
+                                        <LinearColorKeyFrame Value="Gray" KeyTime="0:0:4"/>
 
                                     </ColorAnimationUsingKeyFrames.KeyFrames>
                                 </ColorAnimationUsingKeyFrames>
@@ -310,7 +305,7 @@
         </Grid>
 
         <Grid x:Name="JournalArea" 
-              Grid.Row="1" Visibility="Collapsed" Background="#0000">
+              Grid.Row="1" Visibility="Collapsed" Background="Transparent">
             <Grid.RowDefinitions>
                 <RowDefinition Height="1*"/>
                 <RowDefinition Height="10*"/>
@@ -348,7 +343,7 @@
                                            Text="{Binding Expression}" Foreground="Gray"
                                            HorizontalAlignment="Right" TextWrapping="Wrap"/>
                                     <TextBlock Grid.Row="1" Grid.Column="1" 
-                                           Text="{Binding Result}" Foreground="White"
+                                           Text="{Binding Result}" Foreground="{DynamicResource SystemBaseHighColorBrush}"
                                            HorizontalAlignment="Right" FontSize="24" TextWrapping="Wrap"/>
                                 </Grid>
                             </Button>
@@ -359,7 +354,7 @@
         </Grid>
 
         <Grid x:Name="MemoryArea"
-              Grid.Row="1" Visibility="Collapsed" Background="#0000">
+              Grid.Row="1" Visibility="Collapsed" Background="Transparent">
             <Grid.RowDefinitions>
                 <RowDefinition Height="1*"/>
                 <RowDefinition Height="10*"/>
@@ -373,8 +368,7 @@
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden">
                 <ItemsControl x:Name="MemoryItems"
                               Padding="10"
-                              ItemsSource="{Binding Memory.Collection}" 
-                              Style="{StaticResource ItemsControlJournal}">
+                              ItemsSource="{Binding Memory.Collection}">
 
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
