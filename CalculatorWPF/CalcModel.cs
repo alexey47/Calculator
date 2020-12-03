@@ -175,14 +175,12 @@ namespace Calculator
                             expNewIdx++;
                         }
                     }
-
                     expIdx = Tuple.Create(expNewIdx, expIdx.Item2);
                 }
 
                 int pointNewIdx = 0;
                 if (isDouble)
                 {
-
                     for (int i = firstDigitIdx; i < pointIdx; i++)
                     {
                         if (char.IsDigit(number[i]))
@@ -190,7 +188,6 @@ namespace Calculator
                             pointNewIdx++;
                         }
                     }
-
                     pointIdx = pointNewIdx;
                 }
 
