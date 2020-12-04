@@ -3,6 +3,7 @@ using NUnit.Framework;
 
 namespace Calculator.Tests
 {
+    [TestFixture]
     public class CalculatorViewModelTests
     {
         private CalcViewModel _viewModel;
