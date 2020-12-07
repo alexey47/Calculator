@@ -22,11 +22,11 @@ namespace Calculator
             {
                 if (operations.Contains(exp[i]))
                 {
-                    if (!double.TryParse(exp[i - 1], out _))
+                    if (!decimal.TryParse(exp[i - 1], out _))
                     {
                         exp[i - 1] = NormalizeNumber(exp[i - 1]);
                     }
-                    if (!double.TryParse(exp[i + 1], out _))
+                    if (!decimal.TryParse(exp[i + 1], out _))
                     {
                         exp[i + 1] = NormalizeNumber(exp[i + 1]);
                     }
@@ -34,16 +34,16 @@ namespace Calculator
                     switch (exp[i])
                     {
                         case "+":
-                            exp[i + 1] = (double.Parse(exp[i - 1]) + double.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
+                            exp[i + 1] = (decimal.Parse(exp[i - 1]) + decimal.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
                             break;
                         case "-":
-                            exp[i + 1] = (double.Parse(exp[i - 1]) - double.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
+                            exp[i + 1] = (decimal.Parse(exp[i - 1]) - decimal.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
                             break;
                         case "*":
-                            exp[i + 1] = (double.Parse(exp[i - 1]) * double.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
+                            exp[i + 1] = (decimal.Parse(exp[i - 1]) * decimal.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
                             break;
                         case "/":
-                            exp[i + 1] = (double.Parse(exp[i - 1]) / double.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
+                            exp[i + 1] = (decimal.Parse(exp[i - 1]) / decimal.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
                             break;
                     }
                 }
@@ -75,16 +75,16 @@ namespace Calculator
             {
                 number = Calculate(number);
             }
-            if (!double.TryParse(number, out _))
+            if (!decimal.TryParse(number, out _))
             {
                 number = NormalizeNumber(number);
             }
-            if (!double.TryParse(part, out _))
+            if (!decimal.TryParse(part, out _))
             {
                 part = NormalizeNumber(part);
             }
 
-            return (double.Parse(number) * double.Parse(part) * 0.01).ToString(CultureInfo.CurrentCulture);
+            return (decimal.Parse(number) * decimal.Parse(part) * (decimal)0.01).ToString(CultureInfo.CurrentCulture);
         }
         /// <summary>
         /// Number inversion.
@@ -93,12 +93,12 @@ namespace Calculator
         /// <returns>Inverted number (string)</returns>
         public static string Invert(string number)
         {
-            if (double.TryParse(number, out _))
+            if (decimal.TryParse(number, out _))
             {
-                return (-double.Parse(number)).ToString(CultureInfo.CurrentCulture);
+                return (-decimal.Parse(number)).ToString(CultureInfo.CurrentCulture);
             }
             number = NormalizeNumber(number);
-            return (-double.Parse(number)).ToString(CultureInfo.CurrentCulture);
+            return (-decimal.Parse(number)).ToString(CultureInfo.CurrentCulture);
         }
 
         /// <summary>
@@ -208,7 +208,7 @@ namespace Calculator
                 }
             }
             
-            return double.TryParse(number, out _) ? number : "0";
+            return decimal.TryParse(number, out _) ? number : "0";
         }
     }
 }
