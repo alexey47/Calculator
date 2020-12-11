@@ -4,7 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net5.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
-    <VersionPrefix>02.12</VersionPrefix>
+    <VersionPrefix>11.12</VersionPrefix>
     <VersionSufix>b</VersionSufix>
     <ApplicationIcon>Icons\Calculator.ico</ApplicationIcon>
   </PropertyGroup>
