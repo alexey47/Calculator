@@ -22,7 +22,7 @@ namespace Calculator
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
+         
         protected CalcItem()
         {
             Id = "0";
