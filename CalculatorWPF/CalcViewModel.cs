@@ -88,7 +88,7 @@ namespace Calculator
             LastOperation = "=";
 
             #region Journal
-            Journal = new CalcCollectionTxt<JournalCalcItem>("Journal");
+            Journal = new CalcCollectionDb<JournalCalcItem>("Journal");
             if (Journal.TryLoad())
             {
                 Journal.Collection = Journal.Load();
@@ -96,7 +96,7 @@ namespace Calculator
             #endregion
 
             #region Memory
-            Memory = new CalcCollectionTxt<MemoryCalcItem>("Memory");
+            Memory = new CalcCollectionDb<MemoryCalcItem>("Memory");
             if (Memory.TryLoad())
             {
                 Memory.Collection = Memory.Load();
