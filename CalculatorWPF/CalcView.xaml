@@ -41,6 +41,9 @@
         <KeyBinding Command="{Binding ArithmeticOperationButtonPressCommand}" CommandParameter="×" Key="Multiply"/>
         <KeyBinding Command="{Binding ArithmeticOperationButtonPressCommand}" CommandParameter="÷" Key="Divide"/>
 
+        <KeyBinding Command="{Binding BraketsButtonPressCommand}" CommandParameter="(" Key="D9" Modifiers="Shift"/>
+        <KeyBinding Command="{Binding BraketsButtonPressCommand}" CommandParameter=")" Key="D0" Modifiers="Shift"/>
+
         <KeyBinding Command="{Binding EqualButtonPressCommand}" Key="Return"/>
 
         <KeyBinding Command="{Binding ClearButtonPressCommand}" CommandParameter="C" Key="Delete"/>
@@ -55,7 +58,6 @@
         </Style>
         <Style x:Key="ButtonDigit" TargetType="Button" BasedOn="{StaticResource ButtonStandart}">
             <Setter Property="Background" Value="{DynamicResource SystemAltMediumHighColorBrush}"/>
-            <Setter Property="Command" Value="{Binding DigitButtonPressCommand}"/>
         </Style>
         <Style x:Key="ButtonOperations" TargetType="Button" BasedOn="{StaticResource ButtonStandart}">
             <Setter Property="Background" Value="{DynamicResource SystemAltMediumColorBrush}"/>
@@ -67,6 +69,11 @@
         <Style x:Key="ButtonMemoryItemsOperations" TargetType="Button" BasedOn="{StaticResource ButtonOperations}">
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="ButtonBracket" TargetType="Button" BasedOn="{StaticResource ButtonStandart}">
+            <Setter Property="Background" Value="{DynamicResource SystemAltMediumHighColorBrush}"/>
+            <Setter Property="Width" Value="{Binding ElementName=DigitZero, Path=ActualWidth}"/>
+            <Setter Property="Height" Value="{Binding ElementName=DigitZero, Path=ActualWidth}"/>
         </Style>
 
         <Style x:Key="ButtonDisplay" TargetType="Button" BasedOn="{StaticResource ButtonRevealStyle}">
@@ -144,7 +151,8 @@
 
             <Button x:Name="DisplaySmall" 
                     Click="ShowCollapseJournalList"
-                    Grid.Row="0" Style="{StaticResource ButtonDisplaySmall}" ToolTip="Show/Hide journal">
+                    Grid.Row="0" Style="{StaticResource ButtonDisplaySmall}" 
+                    ToolTip="Show/Hide journal">
                 <Viewbox>
                     <TextBlock Text="{Binding Path=Expression, Mode=TwoWay}"/>
                 </Viewbox>
@@ -223,45 +231,56 @@
 
             <!--#region BUTTONS-->
             <Button Content="0"
-                Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" 
-                CommandParameter="0"
-                Style="{StaticResource ButtonDigit}"/>
+                    x:Name="DigitZero"
+                    Grid.Row="4" Grid.Column="1"
+                    CommandParameter="0"
+                    Style="{StaticResource ButtonDigit}"
+                    Command="{Binding DigitButtonPressCommand}"/>
             <Button Content="1" 
-                Grid.Row="3" Grid.Column="0" 
-                CommandParameter="1"
-                Style="{StaticResource ButtonDigit}"/>
+                    Grid.Row="3" Grid.Column="0" 
+                    CommandParameter="1"
+                    Style="{StaticResource ButtonDigit}"
+                    Command="{Binding DigitButtonPressCommand}"/>
             <Button Content="2" 
-                Grid.Row="3" Grid.Column="1" 
-                CommandParameter="2"
-                Style="{StaticResource ButtonDigit}"/>
+                    Grid.Row="3" Grid.Column="1" 
+                    CommandParameter="2"
+                    Style="{StaticResource ButtonDigit}"
+                    Command="{Binding DigitButtonPressCommand}"/>
             <Button Content="3" 
-                Grid.Row="3" Grid.Column="2" 
-                CommandParameter="3"
-                Style="{StaticResource ButtonDigit}"/>
+                    Grid.Row="3" Grid.Column="2" 
+                    CommandParameter="3"
+                    Style="{StaticResource ButtonDigit}"
+                    Command="{Binding DigitButtonPressCommand}"/>
             <Button Content="4" 
-                Grid.Row="2" Grid.Column="0" 
-                CommandParameter="4"
-                Style="{StaticResource ButtonDigit}"/>
+                    Grid.Row="2" Grid.Column="0" 
+                    CommandParameter="4"
+                    Style="{StaticResource ButtonDigit}"
+                    Command="{Binding DigitButtonPressCommand}"/>
             <Button Content="5" 
-                Grid.Row="2" Grid.Column="1" 
-                CommandParameter="5"
-                Style="{StaticResource ButtonDigit}"/>
+                    Grid.Row="2" Grid.Column="1" 
+                    CommandParameter="5"
+                    Style="{StaticResource ButtonDigit}"
+                    Command="{Binding DigitButtonPressCommand}"/>
             <Button Content="6" 
-                Grid.Row="2" Grid.Column="2" 
-                CommandParameter="6"
-                Style="{StaticResource ButtonDigit}"/>
+                    Grid.Row="2" Grid.Column="2" 
+                    CommandParameter="6"
+                    Style="{StaticResource ButtonDigit}"
+                    Command="{Binding DigitButtonPressCommand}"/>
             <Button Content="7"
-                Grid.Row="1" Grid.Column="0" 
-                CommandParameter="7"
-                Style="{StaticResource ButtonDigit}"/>
+                    Grid.Row="1" Grid.Column="0" 
+                    CommandParameter="7"
+                    Style="{StaticResource ButtonDigit}"
+                    Command="{Binding DigitButtonPressCommand}"/>
             <Button Content="8" 
-                Grid.Row="1" Grid.Column="1" 
-                CommandParameter="8"
-                Style="{StaticResource ButtonDigit}"/>
+                    Grid.Row="1" Grid.Column="1" 
+                    CommandParameter="8"
+                    Style="{StaticResource ButtonDigit}"
+                    Command="{Binding DigitButtonPressCommand}"/>
             <Button Content="9" 
-                Grid.Row="1" Grid.Column="2" 
-                CommandParameter="9"
-                Style="{StaticResource ButtonDigit}"/>
+                    Grid.Row="1" Grid.Column="2" 
+                    CommandParameter="9"
+                    Style="{StaticResource ButtonDigit}"
+                    Command="{Binding DigitButtonPressCommand}"/>
             <Button Content=","
                     Command="{Binding PointButtonPressCommand}"
                     Grid.Row="4" Grid.Column="2" 
@@ -269,9 +288,9 @@
 
             <Button Content="+" 
                     Command="{Binding ArithmeticOperationButtonPressCommand}" CommandParameter="+"
-                    Grid.Row="3" Grid.Column="3" 
+                    Grid.Row="3" Grid.Column="3"
                     Style="{StaticResource ButtonOperations}"/>
-            <Button Content="-" 
+            <Button Content="–" 
                     Command="{Binding ArithmeticOperationButtonPressCommand}" CommandParameter="-"
                     Grid.Row="2" Grid.Column="3" 
                     Style="{StaticResource ButtonOperations}"/>
@@ -294,13 +313,70 @@
                     Style="{StaticResource ButtonOperations}"/>
             <Button Content="%"
                     Command="{Binding PercentButtonPressCommand}"
-                    Grid.Row="0" Grid.Column="2" 
+                    Grid.Row="0" Grid.Column="2"
                     Style="{StaticResource ButtonOperations}"/>
 
             <Button Content="CE/C"
                     Style="{StaticResource ButtonOperations}"
                     Command="{Binding ClearButtonPressCommand}"
                     Grid.Row="0" Grid.Column="0"/>
+
+            <Button Content="(    )"
+                    Grid.Row="4" Grid.Column="0"
+                    Style="{StaticResource ButtonDigit}"
+                    PreviewMouseLeftButtonDown="ShowCollapseBracketsMenu">
+            </Button>
+            <Popup x:Name="BracketsMenu"
+                   Grid.Row="4" Grid.Column="0"
+                   StaysOpen="False" Placement="MousePoint"
+                   AllowsTransparency="True">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="30"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Background="#333"/>
+                    <Border Grid.Column="2" Background="#333"/>
+
+                    <Button Grid.Column="0"
+                            Style="{StaticResource ButtonBracket}"
+                            Command="{Binding BraketsButtonPressCommand}"
+                            CommandParameter="("
+                            PreviewMouseLeftButtonUp="BracketExecuteCommand">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding BracketsCount}"
+                                       FontSize="10"
+                                       Width="auto"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="("/>
+                        </Grid>
+                    </Button>
+                    <Button Grid.Column="2"
+                            Style="{StaticResource ButtonBracket}"
+                            Command="{Binding BraketsButtonPressCommand}"
+                            CommandParameter=")"
+                            PreviewMouseLeftButtonUp="BracketExecuteCommand"
+                            >
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0"
+                                       Text=")"/>
+                        </Grid>
+                    </Button>
+                </Grid>
+            </Popup>
             <!--#endregion-->
         </Grid>
 

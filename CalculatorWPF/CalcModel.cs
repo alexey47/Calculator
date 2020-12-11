@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 
@@ -14,7 +16,7 @@ namespace Calculator
         /// <returns>Expression result (string)</returns>
         public static string Calculate(string expression)
         {
-            expression = expression.Replace('×', '*').Replace('÷', '/');
+            expression = expression.Replace('×', '*').Replace('÷', '/').Replace('–', '-');
             string[] exp = expression.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             string[] operations = { "+", "-", "*", "/" };
 
@@ -22,11 +24,11 @@ namespace Calculator
             {
                 if (operations.Contains(exp[i]))
                 {
-                    if (!double.TryParse(exp[i - 1], out _))
+                    if (!decimal.TryParse(exp[i - 1], out _))
                     {
                         exp[i - 1] = NormalizeNumber(exp[i - 1]);
                     }
-                    if (!double.TryParse(exp[i + 1], out _))
+                    if (!decimal.TryParse(exp[i + 1], out _))
                     {
                         exp[i + 1] = NormalizeNumber(exp[i + 1]);
                     }
@@ -34,16 +36,16 @@ namespace Calculator
                     switch (exp[i])
                     {
                         case "+":
-                            exp[i + 1] = (double.Parse(exp[i - 1]) + double.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
+                            exp[i + 1] = (decimal.Parse(exp[i - 1]) + decimal.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
                             break;
                         case "-":
-                            exp[i + 1] = (double.Parse(exp[i - 1]) - double.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
+                            exp[i + 1] = (decimal.Parse(exp[i - 1]) - decimal.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
                             break;
                         case "*":
-                            exp[i + 1] = (double.Parse(exp[i - 1]) * double.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
+                            exp[i + 1] = (decimal.Parse(exp[i - 1]) * decimal.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
                             break;
                         case "/":
-                            exp[i + 1] = (double.Parse(exp[i - 1]) / double.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
+                            exp[i + 1] = (decimal.Parse(exp[i - 1]) / decimal.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
                             break;
                     }
                 }
@@ -54,6 +56,111 @@ namespace Calculator
                 }
             }
             return exp[^1];
+        }
+        /// <summary>
+        /// Variant with calculation priority.<br/>
+        /// Expression format: <i>N O N [O N ... O N]</i> (N - number, O - operation).<br/>
+        /// Available operations: <i>+, -, *, /, ), (</i>.<br/>
+        /// </summary>
+        /// <param name="expression"></param>
+        /// <returns>Expression result (string)</returns>
+        public static string CalculatePriority(string expression)
+        {
+            ReadOnlyDictionary<string, int> operatorsPriority = new ReadOnlyDictionary<string, int>(
+                new Dictionary<string, int>
+                {
+                    {"*", 0},
+                    {"/", 0},
+                    {"+", 1},
+                    {"-", 1},
+                    {"(", 2},
+                    {")", 2}
+                });
+
+            //  Подготовка: Замена кастом символов операций на обычные
+            expression = expression.Replace('×', '*').Replace('÷', '/').Replace('–', '-');
+
+            //  Подготовка: Нормализация чисел
+            string[] exp = expression.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < exp.Length; i++)
+            {
+                if (!operatorsPriority.ContainsKey(exp[i]) && !decimal.TryParse(exp[i], out _))
+                {
+                    exp[i] = NormalizeNumber(exp[i]);
+                }
+            }
+
+            //  Подготовка: Перевод выражения в постфиксную нотацию
+            #region Convert To Postfix Notation
+
+            expression = string.Empty;
+            Stack<string> operations = new Stack<string>();
+            foreach (var item in exp)
+            {
+                if (decimal.TryParse(item, out _))
+                {
+                    expression += $"{item} ";
+                }
+                else if (item == "(")
+                {
+                    operations.Push(item);
+                }
+                else if (item == ")")
+                {
+                    while (operations.Peek() != "(")
+                    {
+                        expression += $"{operations.Pop()} ";
+                    }
+                    if (operations.Peek() == "(")
+                    {
+                        operations.Pop();
+                    }
+                }
+                else if (operatorsPriority.ContainsKey(item))
+                {
+                    if (!operations.Count.Equals(0) && operatorsPriority[item] >= operatorsPriority[operations.Peek()])
+                    {
+                        expression += $"{operations.Pop()} ";
+                    }
+                    operations.Push(item);
+                }
+            }
+            while (!operations.Count.Equals(0))
+            {
+                expression += $"{operations.Pop()} ";
+            }
+            
+            #endregion
+
+            //  Подготовка: Перемещение в List для более удобного удаления элементов
+            List<string> expList = new List<string>(expression.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+
+            //  Расчет
+            for (int i = 2; i < expList.Count; i++)
+            {
+                if (operatorsPriority.ContainsKey(expList[i]))
+                {
+                    switch (expList[i])
+                    {
+                        case "+":
+                            expList[i] = (decimal.Parse(expList[i - 2]) + decimal.Parse(expList[i - 1])).ToString(CultureInfo.CurrentCulture);
+                            break;
+                        case "-":
+                            expList[i] = (decimal.Parse(expList[i - 2]) - decimal.Parse(expList[i - 1])).ToString(CultureInfo.CurrentCulture);
+                            break;
+                        case "*":
+                            expList[i] = (decimal.Parse(expList[i - 2]) * decimal.Parse(expList[i - 1])).ToString(CultureInfo.CurrentCulture);
+                            break;
+                        case "/":
+                            expList[i] = (decimal.Parse(expList[i - 2]) / decimal.Parse(expList[i - 1])).ToString(CultureInfo.CurrentCulture);
+                            break;
+                    }
+                    expList.RemoveRange(i - 2, 2);
+                    i -= 2;
+                }
+            }
+
+            return expList[0];
         }
         /// <summary>
         /// Percent.
@@ -67,24 +174,20 @@ namespace Calculator
             {
                 return "0";
             }
-            if (!char.IsDigit(number[^2]))
-            {
-                number = number.Remove(number.Length - 2);
-            }
             if (number.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length > 2)
             {
-                number = Calculate(number);
+                number = CalculatePriority(number);
             }
-            if (!double.TryParse(number, out _))
+            if (!decimal.TryParse(number, out _))
             {
                 number = NormalizeNumber(number);
             }
-            if (!double.TryParse(part, out _))
+            if (!decimal.TryParse(part, out _))
             {
                 part = NormalizeNumber(part);
             }
 
-            return (double.Parse(number) * double.Parse(part) * 0.01).ToString(CultureInfo.CurrentCulture);
+            return (decimal.Parse(number) * decimal.Parse(part) / 100).ToString(CultureInfo.CurrentCulture);
         }
         /// <summary>
         /// Number inversion.
@@ -93,12 +196,12 @@ namespace Calculator
         /// <returns>Inverted number (string)</returns>
         public static string Invert(string number)
         {
-            if (double.TryParse(number, out _))
+            if (!decimal.TryParse(number, out _))
             {
-                return (-double.Parse(number)).ToString(CultureInfo.CurrentCulture);
+                number = NormalizeNumber(number);
             }
-            number = NormalizeNumber(number);
-            return (-double.Parse(number)).ToString(CultureInfo.CurrentCulture);
+
+            return (-decimal.Parse(number)).ToString(CultureInfo.CurrentCulture);
         }
 
         /// <summary>
@@ -207,8 +310,8 @@ namespace Calculator
                     number = number.Insert(0, "-");
                 }
             }
-            
-            return double.TryParse(number, out _) ? number : "0";
+
+            return decimal.TryParse(number, out _) ? number : "0";
         }
     }
 }

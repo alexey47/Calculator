@@ -14,6 +14,7 @@ using Dapper;
 
 namespace Calculator
 {
+    //  Instances
     public abstract class CalcItem : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
@@ -21,7 +22,7 @@ namespace Calculator
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
+         
         protected CalcItem()
         {
             Id = "0";
@@ -132,29 +133,27 @@ namespace Calculator
         }
     }
 
-    public interface ICalcCollection<TCalcItem> where TCalcItem : CalcItem
+    //  Collections
+    public abstract class CalcCollection<TCalcItem> where TCalcItem : CalcItem, new()
     {
         public ObservableCollection<TCalcItem> Collection
         {
-            get; set;
+            get; 
+            set;
         }
-        public bool TryLoad();
-        public ObservableCollection<TCalcItem> Load();
-        public void Add(TCalcItem item);
-        public void Remove(TCalcItem item);
-        public void Clear();
-        public void ChangeValue(TCalcItem item, string propertyName, string newValue);
+
+        public abstract bool TryLoad();
+        public abstract ObservableCollection<TCalcItem> Load();
+        public abstract void Add(TCalcItem item);
+        public abstract void Remove(TCalcItem item);
+        public abstract void Clear();
+        public abstract void ChangeValue(TCalcItem item, string propertyName, string newValue);
     }
-    public class CalcCollectionTxt<TCalcItem> : ICalcCollection<TCalcItem> where TCalcItem : CalcItem, new()
+    public class CalcCollectionTxt<TCalcItem> : CalcCollection<TCalcItem> where TCalcItem : CalcItem, new()
     {
         private string FileName
         {
             get;
-        }
-        public ObservableCollection<TCalcItem> Collection
-        {
-            get;
-            set;
         }
 
         public CalcCollectionTxt(string fileName)
@@ -168,7 +167,7 @@ namespace Calculator
             }
         }
 
-        public bool TryLoad()
+        public override bool TryLoad()
         {
             try
             {
@@ -187,7 +186,7 @@ namespace Calculator
                 return false;
             }
         }
-        public ObservableCollection<TCalcItem> Load()
+        public override ObservableCollection<TCalcItem> Load()
         {
             string[] text = File.ReadAllText(FileName).Split('\n');
             ObservableCollection<TCalcItem> collection = new ObservableCollection<TCalcItem>();
@@ -221,14 +220,14 @@ namespace Calculator
 
             File.WriteAllText(FileName, text);
         }
-        public void Add(TCalcItem item)
+        public override void Add(TCalcItem item)
         {
             Collection.Insert(0, item);
             item.Id = Collection.Count.ToString();
 
             Update();
         }
-        public void Remove(TCalcItem item)
+        public override void Remove(TCalcItem item)
         {
             Collection.Remove(item);
             for (int i = 0; i < Collection.Count; i++)
@@ -238,29 +237,24 @@ namespace Calculator
 
             Update();
         }
-        public void Clear()
+        public override void Clear()
         {
             Collection.Clear();
 
             Update();
         }
-        public void ChangeValue(TCalcItem item, string propertyName, string newValue)
+        public override void ChangeValue(TCalcItem item, string propertyName, string newValue)
         {
             Collection[Collection.IndexOf(item)].GetType().GetProperty(propertyName)?.SetValue(item, newValue);
 
             Update();
         }
     }
-    public class CalcCollectionJson<TCalcItem> : ICalcCollection<TCalcItem> where TCalcItem : CalcItem
+    public class CalcCollectionJson<TCalcItem> : CalcCollection<TCalcItem> where TCalcItem : CalcItem, new()
     {
         private string FileName
         {
             get;
-        }
-        public ObservableCollection<TCalcItem> Collection
-        {
-            get;
-            set;
         }
 
         public CalcCollectionJson(string fileName)
@@ -274,7 +268,7 @@ namespace Calculator
             }
         }
 
-        public bool TryLoad()
+        public override bool TryLoad()
         {
             try
             {
@@ -287,7 +281,7 @@ namespace Calculator
                 return false;
             }
         }
-        public ObservableCollection<TCalcItem> Load()
+        public override ObservableCollection<TCalcItem> Load()
         {
             string json = File.ReadAllText(FileName);
             ObservableCollection<TCalcItem> collection = JsonSerializer.Deserialize<ObservableCollection<TCalcItem>>(json);
@@ -310,14 +304,14 @@ namespace Calculator
 
             File.WriteAllText(FileName, json);
         }
-        public void Add(TCalcItem item)
+        public override void Add(TCalcItem item)
         {
             Collection.Insert(0, item);
             item.Id = Collection.Count.ToString();
 
             Update();
         }
-        public void Remove(TCalcItem item)
+        public override void Remove(TCalcItem item)
         {
             Collection.Remove(item);
             for (int i = 0; i < Collection.Count; i++)
@@ -327,20 +321,20 @@ namespace Calculator
 
             Update();
         }
-        public void Clear()
+        public override void Clear()
         {
             Collection.Clear();
 
             Update();
         }
-        public void ChangeValue(TCalcItem item, string propertyName, string newValue)
+        public override void ChangeValue(TCalcItem item, string propertyName, string newValue)
         {
             Collection[Collection.IndexOf(item)].GetType().GetProperty(propertyName)?.SetValue(item, newValue);
 
             Update();
         }
     }
-    public class CalcCollectionDb<TCalcItem> : ICalcCollection<TCalcItem> where TCalcItem : CalcItem
+    public class CalcCollectionDb<TCalcItem> : CalcCollection<TCalcItem> where TCalcItem : CalcItem, new()
     {
         private string DataBaseName
         {
@@ -350,13 +344,8 @@ namespace Calculator
         {
             get;
         }
-        public ObservableCollection<TCalcItem> Collection
-        {
-            get;
-            set;
-        }
 
-        public CalcCollectionDb(string dataBaseName, string tableName)
+        public CalcCollectionDb(string tableName, string dataBaseName = "Calculator")
         {
             DataBaseName = dataBaseName + ".db";
             TableName = tableName;
@@ -387,7 +376,7 @@ namespace Calculator
             dataBase.Query(command);
         }
 
-        public bool TryLoad()
+        public override bool TryLoad()
         {
             try
             {
@@ -401,7 +390,7 @@ namespace Calculator
                 return false;
             }
         }
-        public ObservableCollection<TCalcItem> Load()
+        public override ObservableCollection<TCalcItem> Load()
         {
             ObservableCollection<TCalcItem> collection = new ObservableCollection<TCalcItem>();
             using SQLiteConnection dataBase = new SQLiteConnection($"Data Source={DataBaseName}; Version=3");
@@ -419,7 +408,7 @@ namespace Calculator
 
             return collection;
         }
-        public void Add(TCalcItem item)
+        public override void Add(TCalcItem item)
         {
             Collection.Insert(0, item);
             item.Id = Collection.Count.ToString();
@@ -454,7 +443,7 @@ namespace Calculator
 
             dataBase.Query<TCalcItem>(command, parameters);
         }
-        public void Remove(TCalcItem item)
+        public override void Remove(TCalcItem item)
         {
             Collection.Remove(item);
             for (int i = 0; i < Collection.Count; i++)
@@ -471,14 +460,14 @@ namespace Calculator
                                       Set Id = {i - 1} where Id = {i}");
             }
         }
-        public void Clear()
+        public override void Clear()
         {
             Collection.Clear();
 
             using SQLiteConnection dataBase = new SQLiteConnection($"Data Source={DataBaseName}; Version=3");
             dataBase.Query($"Delete from {TableName}");
         }
-        public void ChangeValue(TCalcItem item, string propertyName, string newValue)
+        public override void ChangeValue(TCalcItem item, string propertyName, string newValue)
         {
             Collection[Collection.IndexOf(item)].GetType().GetProperty(propertyName)?.SetValue(item, newValue);
 

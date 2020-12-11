@@ -60,12 +60,22 @@ namespace Calculator
             get;
             set;
         }
-        public CalcCollectionDb<JournalCalcItem> Journal
+        private int _bracketsCount;
+        public int BracketsCount
+        {
+            get => _bracketsCount;
+            set
+            {
+                _bracketsCount = value;
+                OnPropertyChanged(nameof(BracketsCount));
+            }
+        }
+        public CalcCollection<JournalCalcItem> Journal
         {
             get;
             set;
         }
-        public CalcCollectionDb<MemoryCalcItem> Memory
+        public CalcCollection<MemoryCalcItem> Memory
         {
             get;
             set;
@@ -78,7 +88,7 @@ namespace Calculator
             LastOperation = "=";
 
             #region Journal
-            Journal = new CalcCollectionDb<JournalCalcItem>("Calculator", "Journal");
+            Journal = new CalcCollectionTxt<JournalCalcItem>("Journal");
             if (Journal.TryLoad())
             {
                 Journal.Collection = Journal.Load();
@@ -86,7 +96,7 @@ namespace Calculator
             #endregion
 
             #region Memory
-            Memory = new CalcCollectionDb<MemoryCalcItem>("Calculator", "Memory");
+            Memory = new CalcCollectionTxt<MemoryCalcItem>("Memory");
             if (Memory.TryLoad())
             {
                 Memory.Collection = Memory.Load();
@@ -106,10 +116,24 @@ namespace Calculator
         }
         public void DigitButtonPress(string digit)
         {
+            if (LastOperation == "BracketClose")
+            {
+                int bracketOpenIndex = Expression.LastIndexOf('(');
+                int bracketCloseCounter = 0;
+                for (int i = bracketOpenIndex; i < Expression.Length; i++)
+                {
+                    if (Expression[i] == ')')
+                    {
+                        bracketCloseCounter++;
+                    }
+                }
+                BracketsCount += bracketCloseCounter - 1;
+
+                Expression = Expression.Remove(bracketOpenIndex);
+            }
             if (LastOperation == "=")
             {
                 Result = "0";
-                LastOperation = string.Empty;
                 Expression = string.Empty;
             }
             if (Result == "0")
@@ -135,16 +159,31 @@ namespace Calculator
         }
         public void PointButtonPress()
         {
+            if (LastOperation == "BracketClose")
+            {
+                int bracketOpenIndex = Expression.LastIndexOf('(');
+                int bracketCloseCounter = 0;
+                for (int i = bracketOpenIndex; i < Expression.Length; i++)
+                {
+                    if (Expression[i] == ')')
+                    {
+                        bracketCloseCounter++;
+                    }
+                }
+                BracketsCount += bracketCloseCounter - 1;
+
+                Expression = Expression.Remove(bracketOpenIndex);
+            }
             if (LastOperation == "=")
             {
                 Result = "0";
-                LastOperation = string.Empty;
                 Expression = string.Empty;
             }
             if (!Result.Contains(","))
             {
                 Result += ",";
             }
+
             LastOperation = "Number";
         }
         #endregion
@@ -173,13 +212,22 @@ namespace Calculator
                 Expression += $"{Result} {operation} ";
                 Result = "0";
             }
+            else if (LastOperation == "BracketClose")
+            {
+                Expression += $"{operation} ";
+            }
+            else if (LastOperation == "BracketOpen")
+            {
+                Expression += $"{Result} {operation} ";
+                Result = "0";
+            }
             else
             {
                 Expression = Expression.Remove(Expression.Length - 2);
                 Expression += $"{operation} ";
             }
 
-            LastOperation = operation;
+            LastOperation = "Operation";
         }
 
         //  Вычисление
@@ -203,12 +251,22 @@ namespace Calculator
             }
             else
             {
-                Expression += $"{Result} ";
-                Result = CalcModel.Calculate(Expression);
+                if (LastOperation != "BracketClose")
+                {
+                    Expression += $"{Result} ";
+                }
+                while (BracketsCount > 0)
+                {
+                    Expression += ") ";
+                    BracketsCount--;
+                }
+
+                Result = CalcModel.CalculatePriority(Expression);
                 Expression += "=";
 
                 Journal.Add(new JournalCalcItem(Expression, Result));
             }
+
             LastOperation = "=";
         }
 
@@ -227,7 +285,18 @@ namespace Calculator
             {
                 Result = Result.Remove(Result.Length - 1);
             }
-            Result = CalcModel.Percent(Expression, Result);
+
+            string expression = Expression;
+            if (LastOperation == "Operation")
+            {
+                expression = expression.Remove(Expression.Length - 2);
+            }
+            for (int i = 0; i < BracketsCount; i++)
+            {
+                expression += ") ";
+            }
+
+            Result = CalcModel.Percent(expression, Result);
         }
 
         //  Инверсия значения
@@ -245,7 +314,56 @@ namespace Calculator
             {
                 Result = Result.Remove(Result.Length - 1);
             }
+
             Result = CalcModel.Invert(Result);
+        }
+
+        //  Скобки приоритета
+        private ICommand _braketsButtonPressCommand;
+        public ICommand BraketsButtonPressCommand
+        {
+            get
+            {
+                return _braketsButtonPressCommand ??= new RelayCommand<string>(BraketsButtonPress, bracket => true);
+            }
+        }
+        public void BraketsButtonPress(string bracket)
+        {
+            switch (bracket)
+            {
+                case "(":
+                    if (LastOperation == "=")
+                    {
+                        Expression = string.Empty;
+                    }
+                    if (BracketsCount < 25 && LastOperation != "BracketClose")
+                    {
+                        Expression += "( ";
+
+                        BracketsCount++;
+                        LastOperation = "BracketOpen";
+                    }
+                    break;
+                case ")":
+                    if (BracketsCount > 0)
+                    {
+                        if (Result[^1] == ',')
+                        {
+                            Result = Result.Remove(Result.Length - 1);
+                        }
+                        if (LastOperation != "BracketClose")
+                        {
+                            Expression += $"{Result} ";
+                        }
+
+                        Expression += ") ";
+                        Result = "0";
+
+                        BracketsCount--;
+                        LastOperation = "BracketClose";
+                    }
+                    break;
+            }
         }
         #endregion
         #region App actions ICommands
@@ -264,11 +382,14 @@ namespace Calculator
             {
                 Result = "0";
                 Expression = string.Empty;
+                BracketsCount = 0;
             }
             else
             {
                 Result = "0";
             }
+
+            LastOperation = "Clear";
         }
         #endregion
         #region Journal ICommands
@@ -341,7 +462,7 @@ namespace Calculator
             }
             if (Memory.Collection.Count != 0)
             {
-                Result = CalcModel.Calculate($"{Result} + {Memory.Collection[0].Number}");
+                Result = CalcModel.CalculatePriority($"{Result} + {Memory.Collection[0].Number}");
             }
         }
 
@@ -362,7 +483,7 @@ namespace Calculator
             }
             if (Memory.Collection.Count != 0)
             {
-                Result = CalcModel.Calculate($"{Result} - {Memory.Collection[0].Number}");
+                Result = CalcModel.CalculatePriority($"{Result} - {Memory.Collection[0].Number}");
             }
         }
 
@@ -411,6 +532,7 @@ namespace Calculator
                 Expression = string.Empty;
             }
             Result = memoryItem.Number;
+
             LastOperation = "Number";
         }
 
@@ -439,7 +561,7 @@ namespace Calculator
         }
         public void MemoryAddButtonPress(MemoryCalcItem memoryItem)
         {
-            Memory.ChangeValue(memoryItem, "Number", CalcModel.Calculate($"{memoryItem.Number} + {Result}"));
+            Memory.ChangeValue(memoryItem, "Number", CalcModel.CalculatePriority($"{memoryItem.Number} + {Result}"));
         }
 
         //  Вычесть число на дисплее из ячейки памяти (Memory[index] -= Result)
@@ -453,7 +575,7 @@ namespace Calculator
         }
         public void MemorySubtractButtonPress(MemoryCalcItem memoryItem)
         {
-            Memory.ChangeValue(memoryItem, "Number", CalcModel.Calculate($"{memoryItem.Number} - {Result}"));
+            Memory.ChangeValue(memoryItem, "Number", CalcModel.CalculatePriority($"{memoryItem.Number} - {Result}"));
         }
         #endregion
     }

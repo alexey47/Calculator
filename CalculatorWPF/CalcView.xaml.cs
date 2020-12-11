@@ -1,4 +1,6 @@
 ﻿using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media.Effects;
 
 namespace Calculator
@@ -55,6 +57,19 @@ namespace Calculator
                     KeyboardArea.Effect = new BlurEffect { Radius = 0 };
                 }
             }
+        }
+        private void ShowCollapseBracketsMenu(object sender, RoutedEventArgs e)
+        {
+            BracketsMenu.HorizontalOffset = -DigitZero.ActualWidth - 15;
+            BracketsMenu.VerticalOffset = -(DigitZero.ActualHeight / 2);
+
+            BracketsMenu.IsOpen = !BracketsMenu.IsOpen;
+        }
+        private void BracketExecuteCommand(object sender, MouseButtonEventArgs e)
+        {
+            ((Button)sender).Command.Execute(((Button)sender).CommandParameter);
+
+            BracketsMenu.IsOpen = !BracketsMenu.IsOpen;
         }
     }
 }
