@@ -351,12 +351,12 @@
                                 <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock Grid.Column="1"
-                                       Text="("/>
                             <TextBlock Grid.Column="0"
                                        Text="{Binding BracketsCount}"
-                                       FontSize="8"
-                                       Width="10"/>
+                                       FontSize="10"
+                                       Width="auto"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="("/>
                         </Grid>
                     </Button>
                     <Button Grid.Column="2"

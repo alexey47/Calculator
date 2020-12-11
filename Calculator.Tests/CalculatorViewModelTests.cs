@@ -22,7 +22,7 @@ namespace Calculator.Tests
             _viewModel.Result.Should().Be("-3");
 
             _viewModel.ArithmeticOperationButtonPress("+");
-            _viewModel.LastOperation.Should().Be("+");
+            _viewModel.LastOperation.Should().Be("Operation");
 
             _viewModel.DigitButtonPress("1");
             _viewModel.DigitButtonPress("7");
