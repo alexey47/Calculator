@@ -136,28 +136,35 @@ namespace Calculator
             List<string> expList = new List<string>(expression.Split(' ', StringSplitOptions.RemoveEmptyEntries));
 
             //  Расчет
-            for (int i = 2; i < expList.Count; i++)
+            try
             {
-                if (operatorsPriority.ContainsKey(expList[i]))
+                for (int i = 2; i < expList.Count; i++)
                 {
-                    switch (expList[i])
+                    if (operatorsPriority.ContainsKey(expList[i]))
                     {
-                        case "+":
-                            expList[i] = (decimal.Parse(expList[i - 2]) + decimal.Parse(expList[i - 1])).ToString(CultureInfo.CurrentCulture);
-                            break;
-                        case "-":
-                            expList[i] = (decimal.Parse(expList[i - 2]) - decimal.Parse(expList[i - 1])).ToString(CultureInfo.CurrentCulture);
-                            break;
-                        case "*":
-                            expList[i] = (decimal.Parse(expList[i - 2]) * decimal.Parse(expList[i - 1])).ToString(CultureInfo.CurrentCulture);
-                            break;
-                        case "/":
-                            expList[i] = (decimal.Parse(expList[i - 2]) / decimal.Parse(expList[i - 1])).ToString(CultureInfo.CurrentCulture);
-                            break;
+                        switch (expList[i])
+                        {
+                            case "+":
+                                expList[i] = (decimal.Parse(expList[i - 2]) + decimal.Parse(expList[i - 1])).ToString(CultureInfo.CurrentCulture);
+                                break;
+                            case "-":
+                                expList[i] = (decimal.Parse(expList[i - 2]) - decimal.Parse(expList[i - 1])).ToString(CultureInfo.CurrentCulture);
+                                break;
+                            case "*":
+                                expList[i] = (decimal.Parse(expList[i - 2]) * decimal.Parse(expList[i - 1])).ToString(CultureInfo.CurrentCulture);
+                                break;
+                            case "/":
+                                expList[i] = (decimal.Parse(expList[i - 2]) / decimal.Parse(expList[i - 1])).ToString(CultureInfo.CurrentCulture);
+                                break;
+                        }
+                        expList.RemoveRange(i - 2, 2);
+                        i -= 2;
                     }
-                    expList.RemoveRange(i - 2, 2);
-                    i -= 2;
                 }
+            }
+            catch
+            {
+                return "Error!";
             }
 
             return expList[0];

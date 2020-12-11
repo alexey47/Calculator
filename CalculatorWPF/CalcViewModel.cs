@@ -23,7 +23,7 @@ namespace Calculator
                 switch (columnName)
                 {
                     case nameof(Result):
-                        if (!double.TryParse(Result, out _))
+                        if (!decimal.TryParse(Result, out _))
                         {
                             error = $"\"{Result}\" is not a number. May return unexpected result";
                         }
@@ -223,7 +223,18 @@ namespace Calculator
             }
             else
             {
-                Expression = Expression.Remove(Expression.Length - 2);
+                if (Expression == string.Empty)
+                {
+                    Expression += $"{Result} ";
+                }
+                else
+                {
+                    if ("+-–*×/÷".Contains(Expression[^2]))
+                    {
+                        Expression = Expression.Remove(Expression.Length - 2);
+                    }
+                }
+
                 Expression += $"{operation} ";
             }
 
@@ -287,9 +298,12 @@ namespace Calculator
             }
 
             string expression = Expression;
-            if (LastOperation == "Operation")
+            if (expression.Length > 2)
             {
-                expression = expression.Remove(Expression.Length - 2);
+                if ("+-–*×/÷".Contains(expression[^2]))
+                {
+                    expression = expression.Remove(Expression.Length - 2);
+                }
             }
             for (int i = 0; i < BracketsCount; i++)
             {
