@@ -64,7 +64,7 @@ namespace Calculator.Tests
         [Test, Category("Common")]
         public void AllOperations_BigExpression_18return()
         {
-            CalcModel.CalculatePriority("( 1 + 4 ) * 5 - 7 + ( 5 - 3 + ( 9 - 10 ) * 2 )").Should().Be("18");
+            CalcModel.CalculatePriority("( 1 + 4 ) * 5 - 7 + ( 5 - 3 + ( 9 - 10 ) * 2 ) / 9").Should().Be("18");
         }
     }
 }
