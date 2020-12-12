@@ -4,17 +4,22 @@ using System.Windows.Input;
 
 namespace Calculator
 {
-    public abstract class BaseViewModel : INotifyPropertyChanged
+    public abstract class BaseViewModel : INotifyPropertyChanged, IDataErrorInfo
     {
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnPropertyChanged([CallerMemberName] string propertyName = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+        public abstract string this[string columnName]
+        {
+            get;
+        }
+        public string Error => null;
     }
-    public class CalcViewModel : BaseViewModel, IDataErrorInfo
+    public class CalcViewModel : BaseViewModel
     {
-        public string this[string columnName]
+        public override string this[string columnName]
         {
             get
             {
@@ -33,8 +38,7 @@ namespace Calculator
                 return error;
             }
         }
-        public string Error => null;
-
+        
         private string _result;
         public string Result
         {
