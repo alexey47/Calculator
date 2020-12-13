@@ -24,11 +24,11 @@ namespace Calculator
             {
                 if (operations.Contains(exp[i]))
                 {
-                    if (!decimal.TryParse(exp[i - 1], out _))
+                    if (!decimal.TryParse(exp[i - 1], NumberStyles.Float, new CultureInfo("en-US"), out _))
                     {
                         exp[i - 1] = NormalizeNumber(exp[i - 1]);
                     }
-                    if (!decimal.TryParse(exp[i + 1], out _))
+                    if (!decimal.TryParse(exp[i + 1], NumberStyles.Float, new CultureInfo("en-US"), out _))
                     {
                         exp[i + 1] = NormalizeNumber(exp[i + 1]);
                     }
@@ -36,16 +36,20 @@ namespace Calculator
                     switch (exp[i])
                     {
                         case "+":
-                            exp[i + 1] = (decimal.Parse(exp[i - 1]) + decimal.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
+                            exp[i + 1] = (decimal.Parse(exp[i - 1], NumberStyles.Float, new CultureInfo("en-US")) + 
+                                          decimal.Parse(exp[i + 1], NumberStyles.Float, new CultureInfo("en-US"))).ToString(new CultureInfo("en-US"));
                             break;
                         case "-":
-                            exp[i + 1] = (decimal.Parse(exp[i - 1]) - decimal.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
+                            exp[i + 1] = (decimal.Parse(exp[i - 1], NumberStyles.Float, new CultureInfo("en-US")) - 
+                                          decimal.Parse(exp[i + 1], NumberStyles.Float, new CultureInfo("en-US"))).ToString(new CultureInfo("en-US"));
                             break;
                         case "*":
-                            exp[i + 1] = (decimal.Parse(exp[i - 1]) * decimal.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
+                            exp[i + 1] = (decimal.Parse(exp[i - 1], NumberStyles.Float, new CultureInfo("en-US")) * 
+                                          decimal.Parse(exp[i + 1], NumberStyles.Float, new CultureInfo("en-US"))).ToString(new CultureInfo("en-US"));
                             break;
                         case "/":
-                            exp[i + 1] = (decimal.Parse(exp[i - 1]) / decimal.Parse(exp[i + 1])).ToString(CultureInfo.CurrentCulture);
+                            exp[i + 1] = (decimal.Parse(exp[i - 1], NumberStyles.Float, new CultureInfo("en-US")) / 
+                                          decimal.Parse(exp[i + 1], NumberStyles.Float, new CultureInfo("en-US"))).ToString(new CultureInfo("en-US"));
                             break;
                     }
                 }
@@ -84,7 +88,7 @@ namespace Calculator
             string[] exp = expression.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             for (int i = 0; i < exp.Length; i++)
             {
-                if (!operatorsPriority.ContainsKey(exp[i]) && !decimal.TryParse(exp[i], out _))
+                if (!operatorsPriority.ContainsKey(exp[i]) && !decimal.TryParse(exp[i], NumberStyles.Float, new CultureInfo("en-US"), out _))
                 {
                     exp[i] = NormalizeNumber(exp[i]);
                 }
@@ -97,7 +101,7 @@ namespace Calculator
             Stack<string> operations = new Stack<string>();
             foreach (var item in exp)
             {
-                if (decimal.TryParse(item, out _))
+                if (decimal.TryParse(item, NumberStyles.Float, new CultureInfo("en-US"), out _))
                 {
                     expression += $"{item} ";
                 }
@@ -145,16 +149,20 @@ namespace Calculator
                         switch (expList[i])
                         {
                             case "+":
-                                expList[i] = (decimal.Parse(expList[i - 2]) + decimal.Parse(expList[i - 1])).ToString(CultureInfo.CurrentCulture);
+                                expList[i] = (decimal.Parse(expList[i - 2], NumberStyles.Float, new CultureInfo("en-US")) + 
+                                              decimal.Parse(expList[i - 1], NumberStyles.Float, new CultureInfo("en-US"))).ToString("G29", new CultureInfo("en-US"));
                                 break;
                             case "-":
-                                expList[i] = (decimal.Parse(expList[i - 2]) - decimal.Parse(expList[i - 1])).ToString(CultureInfo.CurrentCulture);
+                                expList[i] = (decimal.Parse(expList[i - 2], NumberStyles.Float, new CultureInfo("en-US")) - 
+                                              decimal.Parse(expList[i - 1], NumberStyles.Float, new CultureInfo("en-US"))).ToString("G29", new CultureInfo("en-US"));
                                 break;
                             case "*":
-                                expList[i] = (decimal.Parse(expList[i - 2]) * decimal.Parse(expList[i - 1])).ToString(CultureInfo.CurrentCulture);
+                                expList[i] = (decimal.Parse(expList[i - 2], NumberStyles.Float, new CultureInfo("en-US")) * 
+                                              decimal.Parse(expList[i - 1], NumberStyles.Float, new CultureInfo("en-US"))).ToString("G29", new CultureInfo("en-US"));
                                 break;
                             case "/":
-                                expList[i] = (decimal.Parse(expList[i - 2]) / decimal.Parse(expList[i - 1])).ToString(CultureInfo.CurrentCulture);
+                                expList[i] = (decimal.Parse(expList[i - 2], NumberStyles.Float, new CultureInfo("en-US")) / 
+                                              decimal.Parse(expList[i - 1], NumberStyles.Float, new CultureInfo("en-US"))).ToString("G29", new CultureInfo("en-US"));
                                 break;
                         }
                         expList.RemoveRange(i - 2, 2);
@@ -185,16 +193,16 @@ namespace Calculator
             {
                 number = CalculatePriority(number);
             }
-            if (!decimal.TryParse(number, out _))
+            if (!decimal.TryParse(number, NumberStyles.Float, new CultureInfo("en-US"), out _))
             {
                 number = NormalizeNumber(number);
             }
-            if (!decimal.TryParse(part, out _))
+            if (!decimal.TryParse(part, NumberStyles.Float, new CultureInfo("en-US"), out _))
             {
                 part = NormalizeNumber(part);
             }
 
-            return (decimal.Parse(number) * decimal.Parse(part) / 100).ToString(CultureInfo.CurrentCulture);
+            return (decimal.Parse(number, NumberStyles.Float, new CultureInfo("en-US")) * decimal.Parse(part, NumberStyles.Float, new CultureInfo("en-US")) / 100).ToString(new CultureInfo("en-US"));
         }
         /// <summary>
         /// Number inversion.
@@ -203,12 +211,12 @@ namespace Calculator
         /// <returns>Inverted number (string)</returns>
         public static string Invert(string number)
         {
-            if (!decimal.TryParse(number, out _))
+            if (!decimal.TryParse(number, NumberStyles.Float, new CultureInfo("en-US"), out _))
             {
                 number = NormalizeNumber(number);
             }
 
-            return (-decimal.Parse(number)).ToString(CultureInfo.CurrentCulture);
+            return (-decimal.Parse(number, NumberStyles.Float, new CultureInfo("en-US"))).ToString(new CultureInfo("en-US"));
         }
 
         /// <summary>
@@ -310,7 +318,7 @@ namespace Calculator
                 }
                 if (isDouble)
                 {
-                    number = number.Insert(pointIdx, ",");
+                    number = number.Insert(pointIdx, ".");
                 }
                 if (isNegative)
                 {
@@ -318,7 +326,7 @@ namespace Calculator
                 }
             }
 
-            return decimal.TryParse(number, out _) ? number : "0";
+            return decimal.TryParse(number, NumberStyles.Float, new CultureInfo("en-US"), out _) ? number : "0";
         }
     }
 }
