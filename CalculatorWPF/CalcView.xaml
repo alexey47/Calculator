@@ -38,7 +38,7 @@
         <KeyBinding Command="{Binding DigitButtonPressCommand}" CommandParameter="E-" Key="E" Modifiers="Shift"/>
 
         <KeyBinding Command="{Binding ArithmeticOperationButtonPressCommand}" CommandParameter="+" Key="Add"/>
-        <KeyBinding Command="{Binding ArithmeticOperationButtonPressCommand}" CommandParameter="-" Key="Subtract"/>
+        <KeyBinding Command="{Binding ArithmeticOperationButtonPressCommand}" CommandParameter="–" Key="Subtract"/>
         <KeyBinding Command="{Binding ArithmeticOperationButtonPressCommand}" CommandParameter="×" Key="Multiply"/>
         <KeyBinding Command="{Binding ArithmeticOperationButtonPressCommand}" CommandParameter="÷" Key="Divide"/>
 
