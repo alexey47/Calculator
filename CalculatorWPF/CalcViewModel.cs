@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 
@@ -28,7 +29,7 @@ namespace Calculator
                 switch (columnName)
                 {
                     case nameof(Result):
-                        if (!decimal.TryParse(Result, out _))
+                        if (!decimal.TryParse(Result, NumberStyles.Float, new CultureInfo("en-US"), out _))
                         {
                             error = $"\"{Result}\" is not a number. May return unexpected result";
                         }
@@ -183,9 +184,9 @@ namespace Calculator
                 Result = "0";
                 Expression = string.Empty;
             }
-            if (!Result.Contains(","))
+            if (!Result.Contains("."))
             {
-                Result += ",";
+                Result += ".";
             }
 
             LastOperation = "Number";
