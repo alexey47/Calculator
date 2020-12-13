@@ -62,9 +62,9 @@ namespace Calculator.Tests
             CalcModel.Percent("100", "1").Should().Be("1");
         }
         [Test, Category("Common")]
-        public void AllOperations_BigExpression_18return()
+        public void AllOperations_BigExpression_53return()
         {
-            CalcModel.CalculatePriority("( 1 + 4 ) * 5 - 7 + ( 5 - 3 + ( 9 - 10 ) * 2 ) / 9").Should().Be("18");
+            CalcModel.CalculatePriority("( 1 + 4 ) * 5 - 7 + ( 5 - 3 + ( 9 - 10 ) * 2 ) / 9 + ( ( 9 + 5 * 2 ) - 25 / 5 ) + 85 - 32 * 2").Should().Be("53");
         }
     }
 }
