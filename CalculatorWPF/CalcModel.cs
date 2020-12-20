@@ -275,8 +275,8 @@ namespace Calculator
                 #region IsDouble
 
                 int pointIdx = isExp
-                    ? number.IndexOf(',', firstDigitIdx, expIdx.Item1 - firstDigitIdx - 1)
-                    : number.IndexOf(',', firstDigitIdx);
+                    ? number.IndexOf('.', firstDigitIdx, expIdx.Item1 - firstDigitIdx - 1)
+                    : number.IndexOf('.', firstDigitIdx);
                 bool isDouble = pointIdx != -1;
 
                 #endregion
