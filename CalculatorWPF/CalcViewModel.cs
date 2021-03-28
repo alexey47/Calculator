@@ -39,7 +39,30 @@ namespace Calculator
                 return error;
             }
         }
-        
+
+        public CalcViewModel()
+        {
+            Result = "0";
+            Expression = string.Empty;
+            _lastOperation = "=";
+
+            #region Journal
+            Journal = new CalcCollectionDb<JournalCalcItem>("Journal");
+            if (Journal.TryLoad())
+            {
+                Journal.Collection = Journal.Load();
+            }
+            #endregion
+
+            #region Memory
+            Memory = new CalcCollectionDb<MemoryCalcItem>("Memory");
+            if (Memory.TryLoad())
+            {
+                Memory.Collection = Memory.Load();
+            }
+            #endregion
+        }
+
         private string _result;
         public string Result
         {
@@ -60,11 +83,7 @@ namespace Calculator
                 OnPropertyChanged(nameof(Expression));
             }
         }
-        public string LastOperation
-        {
-            get;
-            set;
-        }
+        private string _lastOperation;
         private int _bracketsCount;
         public int BracketsCount
         {
@@ -86,515 +105,439 @@ namespace Calculator
             set;
         }
 
-        public CalcViewModel()
-        {
-            Result = "0";
-            Expression = string.Empty;
-            LastOperation = "=";
-
-            #region Journal
-            Journal = new CalcCollectionDb<JournalCalcItem>("Journal");
-            if (Journal.TryLoad())
-            {
-                Journal.Collection = Journal.Load();
-            }
-            #endregion
-
-            #region Memory
-            Memory = new CalcCollectionDb<MemoryCalcItem>("Memory");
-            if (Memory.TryLoad())
-            {
-                Memory.Collection = Memory.Load();
-            }
-            #endregion
-        }
-
         #region Numbers ICommands
         //  Цифры
-        private ICommand _digitButtonPressCommand;
         public ICommand DigitButtonPressCommand
         {
             get
             {
-                return _digitButtonPressCommand ??= new RelayCommand<string>(DigitButtonPress, digit => true);
-            }
-        }
-        public void DigitButtonPress(string digit)
-        {
-            if (LastOperation == "BracketClose")
-            {
-                int bracketOpenIndex = Expression.LastIndexOf('(');
-                int bracketCloseCounter = 0;
-                for (int i = bracketOpenIndex; i < Expression.Length; i++)
+                return new RelayCommand<string>((digit) =>
                 {
-                    if (Expression[i] == ')')
+                    if (_lastOperation == "BracketClose")
                     {
-                        bracketCloseCounter++;
+                        int bracketOpenIndex = Expression.LastIndexOf('(');
+                        int bracketCloseCounter = 0;
+                        for (int i = bracketOpenIndex; i < Expression.Length; i++)
+                        {
+                            if (Expression[i] == ')')
+                            {
+                                bracketCloseCounter++;
+                            }
+                        }
+                        BracketsCount += bracketCloseCounter - 1;
+
+                        Expression = Expression.Remove(bracketOpenIndex);
                     }
-                }
-                BracketsCount += bracketCloseCounter - 1;
+                    if (_lastOperation == "=")
+                    {
+                        Result = "0";
+                        Expression = string.Empty;
+                    }
+                    if (Result == "0")
+                    {
+                        Result = digit;
+                    }
+                    else if (Result.Length < 16)
+                    {
+                        Result += digit;
+                    }
 
-                Expression = Expression.Remove(bracketOpenIndex);
+                    _lastOperation = "Number";
+                });
             }
-            if (LastOperation == "=")
-            {
-                Result = "0";
-                Expression = string.Empty;
-            }
-            if (Result == "0")
-            {
-                Result = digit;
-            }
-            else if (Result.Length < 16)
-            {
-                Result += digit;
-            }
-
-            LastOperation = "Number";
         }
-
         //  Запятая
-        private ICommand _pointButtonPressCommand;
         public ICommand PointButtonPressCommand
         {
             get
             {
-                return _pointButtonPressCommand ??= new RelayCommand(PointButtonPress);
-            }
-        }
-        public void PointButtonPress()
-        {
-            if (LastOperation == "BracketClose")
-            {
-                int bracketOpenIndex = Expression.LastIndexOf('(');
-                int bracketCloseCounter = 0;
-                for (int i = bracketOpenIndex; i < Expression.Length; i++)
+                return new RelayCommand(() =>
                 {
-                    if (Expression[i] == ')')
+                    if (_lastOperation == "BracketClose")
                     {
-                        bracketCloseCounter++;
+                        int bracketOpenIndex = Expression.LastIndexOf('(');
+                        int bracketCloseCounter = 0;
+                        for (int i = bracketOpenIndex; i < Expression.Length; i++)
+                        {
+                            if (Expression[i] == ')')
+                            {
+                                bracketCloseCounter++;
+                            }
+                        }
+                        BracketsCount += bracketCloseCounter - 1;
+
+                        Expression = Expression.Remove(bracketOpenIndex);
                     }
-                }
-                BracketsCount += bracketCloseCounter - 1;
+                    if (_lastOperation == "=")
+                    {
+                        Result = "0";
+                        Expression = string.Empty;
+                    }
+                    if (!Result.Contains("."))
+                    {
+                        Result += ".";
+                    }
 
-                Expression = Expression.Remove(bracketOpenIndex);
+                    _lastOperation = "Number";
+                });
             }
-            if (LastOperation == "=")
-            {
-                Result = "0";
-                Expression = string.Empty;
-            }
-            if (!Result.Contains("."))
-            {
-                Result += ".";
-            }
-
-            LastOperation = "Number";
         }
         #endregion
         #region Operations ICommands
         //  Арифметические операции
-        private ICommand _arithmeticOperationButtonPress;
         public ICommand ArithmeticOperationButtonPressCommand
         {
             get
             {
-                return _arithmeticOperationButtonPress ??= new RelayCommand<string>(ArithmeticOperationButtonPress, operation => true);
-            }
-        }
-        public void ArithmeticOperationButtonPress(string operation)
-        {
-            if (Result[^1] == ',')
-            {
-                Result = Result.Remove(Result.Length - 1);
-            }
-            if (LastOperation == "=")
-            {
-                Expression = string.Empty;
-            }
-            if (LastOperation == "Number" || LastOperation == "=")
-            {
-                Expression += $"{Result} {operation} ";
-                Result = "0";
-            }
-            else if (LastOperation == "BracketClose")
-            {
-                Expression += $"{operation} ";
-            }
-            else if (LastOperation == "BracketOpen")
-            {
-                Expression += $"{Result} {operation} ";
-                Result = "0";
-            }
-            else
-            {
-                if (Expression == string.Empty)
+                return new RelayCommand<string>((operation) =>
                 {
-                    Expression += $"{Result} ";
-                }
-                else
-                {
-                    if ("+-–*×/÷".Contains(Expression[^2]))
+                    if (Result[^1] == ',')
                     {
-                        Expression = Expression.Remove(Expression.Length - 2);
+                        Result = Result.Remove(Result.Length - 1);
                     }
-                }
+                    if (_lastOperation == "=")
+                    {
+                        Expression = string.Empty;
+                    }
+                    if (_lastOperation == "Number" || _lastOperation == "=")
+                    {
+                        Expression += $"{Result} {operation} ";
+                        Result = "0";
+                    }
+                    else if (_lastOperation == "BracketClose")
+                    {
+                        Expression += $"{operation} ";
+                    }
+                    else if (_lastOperation == "BracketOpen")
+                    {
+                        Expression += $"{Result} {operation} ";
+                        Result = "0";
+                    }
+                    else
+                    {
+                        if (Expression == string.Empty)
+                        {
+                            Expression += $"{Result} ";
+                        }
+                        else
+                        {
+                            if ("+-–*×/÷".Contains(Expression[^2]))
+                            {
+                                Expression = Expression.Remove(Expression.Length - 2);
+                            }
+                        }
 
-                Expression += $"{operation} ";
+                        Expression += $"{operation} ";
+                    }
+
+                    _lastOperation = "Operation";
+                });
             }
-
-            LastOperation = "Operation";
         }
-
         //  Вычисление
-        private ICommand _equalButtonPressCommand;
         public ICommand EqualButtonPressCommand
         {
             get
             {
-                return _equalButtonPressCommand ??= new RelayCommand(EqualButtonPress);
+                return new RelayCommand(() =>
+                {
+                    if (Result[^1] == ',')
+                    {
+                        Result = Result.Remove(Result.Length - 1);
+                    }
+                    if (_lastOperation == "=")
+                    {
+                        Expression = $"{Result} =";
+                    }
+                    else
+                    {
+                        if (_lastOperation != "BracketClose")
+                        {
+                            Expression += $"{Result} ";
+                        }
+                        while (BracketsCount > 0)
+                        {
+                            Expression += ") ";
+                            BracketsCount--;
+                        }
+
+                        Result = CalcModel.CalculatePriority(Expression);
+                        Expression += "=";
+
+                        Journal.Add(new JournalCalcItem(Expression, Result));
+                    }
+
+                    _lastOperation = "=";
+                });
             }
         }
-        public void EqualButtonPress()
-        {
-            if (Result[^1] == ',')
-            {
-                Result = Result.Remove(Result.Length - 1);
-            }
-            if (LastOperation == "=")
-            {
-                Expression = $"{Result} =";
-            }
-            else
-            {
-                if (LastOperation != "BracketClose")
-                {
-                    Expression += $"{Result} ";
-                }
-                while (BracketsCount > 0)
-                {
-                    Expression += ") ";
-                    BracketsCount--;
-                }
-
-                Result = CalcModel.CalculatePriority(Expression);
-                Expression += "=";
-
-                Journal.Add(new JournalCalcItem(Expression, Result));
-            }
-
-            LastOperation = "=";
-        }
-
         //  Процент
-        private ICommand _percentButtonPressCommand;
         public ICommand PercentButtonPressCommand
         {
             get
             {
-                return _percentButtonPressCommand ??= new RelayCommand(PercentButtonPress);
-            }
-        }
-        public void PercentButtonPress()
-        {
-            if (Result[^1] == ',')
-            {
-                Result = Result.Remove(Result.Length - 1);
-            }
-
-            string expression = Expression;
-            if (expression.Length > 2)
-            {
-                if ("+-–*×/÷".Contains(expression[^2]))
+                return new RelayCommand(() =>
                 {
-                    expression = expression.Remove(Expression.Length - 2);
-                }
-            }
-            for (int i = 0; i < BracketsCount; i++)
-            {
-                expression += ") ";
-            }
+                    if (Result[^1] == ',')
+                    {
+                        Result = Result.Remove(Result.Length - 1);
+                    }
 
-            Result = CalcModel.Percent(expression, Result);
+                    string expression = Expression;
+                    if (expression.Length > 2)
+                    {
+                        if ("+-–*×/÷".Contains(expression[^2]))
+                        {
+                            expression = expression.Remove(Expression.Length - 2);
+                        }
+                    }
+                    for (int i = 0; i < BracketsCount; i++)
+                    {
+                        expression += ") ";
+                    }
+
+                    Result = CalcModel.Percent(expression, Result);
+                });
+            }
         }
-
         //  Инверсия значения
-        private ICommand _invertButtonPressCommand;
         public ICommand InvertButtonPressCommand
         {
             get
             {
-                return _invertButtonPressCommand ??= new RelayCommand(InvertButtonPress);
+                return new RelayCommand(() =>
+                {
+                    if (Result[^1] == ',')
+                    {
+                        Result = Result.Remove(Result.Length - 1);
+                    }
+
+                    Result = CalcModel.Invert(Result);
+                });
             }
         }
-        public void InvertButtonPress()
-        {
-            if (Result[^1] == ',')
-            {
-                Result = Result.Remove(Result.Length - 1);
-            }
-
-            Result = CalcModel.Invert(Result);
-        }
-
         //  Скобки приоритета
-        private ICommand _braketsButtonPressCommand;
         public ICommand BraketsButtonPressCommand
         {
             get
             {
-                return _braketsButtonPressCommand ??= new RelayCommand<string>(BraketsButtonPress, bracket => true);
-            }
-        }
-        public void BraketsButtonPress(string bracket)
-        {
-            switch (bracket)
-            {
-                case "(":
-                    if (LastOperation == "=")
+                return new RelayCommand<string>((bracket) =>
+                {
+                    switch (bracket)
                     {
-                        Expression = string.Empty;
-                    }
-                    if (BracketsCount < 25 && LastOperation != "BracketClose")
-                    {
-                        Expression += "( ";
+                        case "(":
+                            if (_lastOperation == "=")
+                            {
+                                Expression = string.Empty;
+                            }
+                            if (BracketsCount < 25 && _lastOperation != "BracketClose")
+                            {
+                                Expression += "( ";
 
-                        BracketsCount++;
-                        LastOperation = "BracketOpen";
-                    }
-                    break;
-                case ")":
-                    if (BracketsCount > 0)
-                    {
-                        if (Result[^1] == ',')
-                        {
-                            Result = Result.Remove(Result.Length - 1);
-                        }
-                        if (LastOperation != "BracketClose")
-                        {
-                            Expression += $"{Result} ";
-                        }
+                                BracketsCount++;
+                                _lastOperation = "BracketOpen";
+                            }
+                            break;
+                        case ")":
+                            if (BracketsCount > 0)
+                            {
+                                if (Result[^1] == ',')
+                                {
+                                    Result = Result.Remove(Result.Length - 1);
+                                }
+                                if (_lastOperation != "BracketClose")
+                                {
+                                    Expression += $"{Result} ";
+                                }
 
-                        Expression += ") ";
-                        Result = "0";
+                                Expression += ") ";
+                                Result = "0";
 
-                        BracketsCount--;
-                        LastOperation = "BracketClose";
+                                BracketsCount--;
+                                _lastOperation = "BracketClose";
+                            }
+                            break;
                     }
-                    break;
+                });
             }
         }
         #endregion
         #region App actions ICommands
         //  Очистка экранов (Result)
-        private ICommand _clearButtonPressCommand;
         public ICommand ClearButtonPressCommand
         {
             get
             {
-                return _clearButtonPressCommand ??= new RelayCommand(ClearButtonPress);
-            }
-        }
-        public void ClearButtonPress()
-        {
-            if (LastOperation == "=" || Result == "0")
-            {
-                Result = "0";
-                Expression = string.Empty;
-                BracketsCount = 0;
-            }
-            else
-            {
-                Result = "0";
-            }
+                return new RelayCommand(() =>
+                {
+                    if (_lastOperation == "=" || Result == "0")
+                    {
+                        Result = "0";
+                        Expression = string.Empty;
+                        BracketsCount = 0;
+                    }
+                    else
+                    {
+                        Result = "0";
+                    }
 
-            LastOperation = "Clear";
+                    _lastOperation = "Clear";
+                });
+            }
         }
         #endregion
         #region Journal ICommands
         //  Очистка журнала
-        private ICommand _journalClearButtonPressCommand;
         public ICommand JournalClearButtonPressCommand
         {
             get
             {
-                return _journalClearButtonPressCommand ??= new RelayCommand(JournalClearButtonPress);
+                return new RelayCommand(() =>
+                {
+                    Journal.Clear();
+                });
             }
         }
-        public void JournalClearButtonPress()
-        {
-            Journal.Clear();
-        }
-
-        private ICommand _journalRecallButtonPressCommand;
         public ICommand JournalRecallButtonPressCommand
         {
             get
             {
-                return _journalRecallButtonPressCommand ??= new RelayCommand<JournalCalcItem>(JournalRecallButtonPress, journalItem => true);
+                return new RelayCommand<JournalCalcItem>((journalItem) =>
+                {
+                    Result = journalItem.Result;
+                    Expression = journalItem.Expression;
+                    _lastOperation = "=";
+                });
             }
-        }
-        public void JournalRecallButtonPress(JournalCalcItem journalItem)
-        {
-            Result = journalItem.Result;
-            Expression = journalItem.Expression;
-            LastOperation = "=";
         }
         #endregion
         #region Memory ICommands
         //  Извлечь последнее добавленное значение из памяти
-        private ICommand _memoryRecallLastButtonPressCommand;
         public ICommand MemoryRecallLastButtonPressCommand
         {
             get
             {
-                return _memoryRecallLastButtonPressCommand ??= new RelayCommand(MemoryRecallLastButtonPress, () => Memory.Collection.Count != 0);
+                return new RelayCommand(() =>
+                {
+                    if (_lastOperation == "=")
+                    {
+                        Expression = string.Empty;
+                    }
+                    if (Memory.Collection.Count != 0)
+                    {
+                        Result = Memory.Collection[0].Number;
+                        _lastOperation = "Number";
+                    }
+                }, () => Memory.Collection.Count != 0);
             }
         }
-        public void MemoryRecallLastButtonPress()
-        {
-            if (LastOperation == "=")
-            {
-                Expression = string.Empty;
-            }
-            if (Memory.Collection.Count != 0)
-            {
-                Result = Memory.Collection[0].Number;
-                LastOperation = "Number";
-            }
-        }
-
         //  Добавить к значению на дисплее последний добавленный элемент в память (Result += Memory[0])
-        private ICommand _memoryAddLastButtonPressCommand;
         public ICommand MemoryAddLastButtonPressCommand
         {
             get
             {
-                return _memoryAddLastButtonPressCommand ??= new RelayCommand(MemoryAddLastButtonPress, () => Memory.Collection.Count != 0);
+                return new RelayCommand(() =>
+                {
+                    if (_lastOperation == "=")
+                    {
+                        Expression = string.Empty;
+                    }
+                    if (Memory.Collection.Count != 0)
+                    {
+                        Result = CalcModel.CalculatePriority($"{Result} + {Memory.Collection[0].Number}");
+                    }
+                }, () => Memory.Collection.Count != 0);
             }
         }
-        public void MemoryAddLastButtonPress()
-        {
-            if (LastOperation == "=")
-            {
-                Expression = string.Empty;
-            }
-            if (Memory.Collection.Count != 0)
-            {
-                Result = CalcModel.CalculatePriority($"{Result} + {Memory.Collection[0].Number}");
-            }
-        }
-
         //  Вычесть из значения на дисплее последний добавленный элемент в память (Result -= Memory[0])
-        private ICommand _memorySubtractLastButtonPressCommand;
         public ICommand MemorySubtractLastButtonPressCommand
         {
             get
             {
-                return _memorySubtractLastButtonPressCommand ??= new RelayCommand(MemorySubtractLastButtonPress, () => Memory.Collection.Count != 0);
+                return new RelayCommand(() =>
+                {
+                    if (_lastOperation == "=")
+                    {
+                        Expression = string.Empty;
+                    }
+                    if (Memory.Collection.Count != 0)
+                    {
+                        Result = CalcModel.CalculatePriority($"{Result} - {Memory.Collection[0].Number}");
+                    }
+                }, () => Memory.Collection.Count != 0);
             }
         }
-        public void MemorySubtractLastButtonPress()
-        {
-            if (LastOperation == "=")
-            {
-                Expression = string.Empty;
-            }
-            if (Memory.Collection.Count != 0)
-            {
-                Result = CalcModel.CalculatePriority($"{Result} - {Memory.Collection[0].Number}");
-            }
-        }
-
         //  Сохранить значение в память
-        private ICommand _memorySaveButtonPressCommand;
         public ICommand MemorySaveButtonPressCommand
         {
             get
             {
-                return _memorySaveButtonPressCommand ??= new RelayCommand(MemorySaveButtonPress);
+                return new RelayCommand(() =>
+                {
+                    Memory.Add(new MemoryCalcItem(Result));
+                });
             }
         }
-        public void MemorySaveButtonPress()
-        {
-            Memory.Add(new MemoryCalcItem(Result));
-        }
-
         //  Полная очистка памяти
-        private ICommand _memoryClearAllButtonPressCommand;
         public ICommand MemoryClearAllButtonPressCommand
         {
             get
             {
-                return _memoryClearAllButtonPressCommand ??= new RelayCommand(MemoryClearAllButtonPress);
+                return new RelayCommand(() =>
+                {
+                    Memory.Clear();
+                });
             }
         }
-        public void MemoryClearAllButtonPress()
-        {
-            Memory.Clear();
-        }
-
-
         //  Извлечь значение из памяти
-        private ICommand _memoryRecallButtonPressCommand;
         public ICommand MemoryRecallButtonPressCommand
         {
             get
             {
-                return _memoryRecallButtonPressCommand ??= new RelayCommand<MemoryCalcItem>(MemoryRecallButtonPress, memoryItem => true);
+                return new RelayCommand<MemoryCalcItem>((memoryItem) =>
+                {
+                    if (_lastOperation == "=")
+                    {
+                        Expression = string.Empty;
+                    }
+                    Result = memoryItem.Number;
+
+                    _lastOperation = "Number";
+                });
             }
         }
-        public void MemoryRecallButtonPress(MemoryCalcItem memoryItem)
-        {
-            if (LastOperation == "=")
-            {
-                Expression = string.Empty;
-            }
-            Result = memoryItem.Number;
-
-            LastOperation = "Number";
-        }
-
         //  Удалить элемент из памяти
-        private ICommand _memoryClearButtonPressCommand;
         public ICommand MemoryClearButtonPressCommand
         {
             get
             {
-                return _memoryClearButtonPressCommand ??= new RelayCommand<MemoryCalcItem>(MemoryClearButtonPress, memoryItem => true);
+                return new RelayCommand<MemoryCalcItem>((memoryItem) =>
+                {
+                    Memory.Remove(memoryItem);
+                });
             }
         }
-        public void MemoryClearButtonPress(MemoryCalcItem memoryItem)
-        {
-            Memory.Remove(memoryItem);
-        }
-
         //  Добавить число на дисплее к ячейке памяти (Memory[index] += Result)
-        private ICommand _memoryAddButtonPressCommand;
         public ICommand MemoryAddButtonPressCommand
         {
             get
             {
-                return _memoryAddButtonPressCommand ??= new RelayCommand<MemoryCalcItem>(MemoryAddButtonPress, memoryItem => true);
+                return new RelayCommand<MemoryCalcItem>((memoryItem) =>
+                {
+                    Memory.ChangeValue(memoryItem, "Number", CalcModel.CalculatePriority($"{memoryItem.Number} + {Result}"));
+                });
             }
         }
-        public void MemoryAddButtonPress(MemoryCalcItem memoryItem)
-        {
-            Memory.ChangeValue(memoryItem, "Number", CalcModel.CalculatePriority($"{memoryItem.Number} + {Result}"));
-        }
-
         //  Вычесть число на дисплее из ячейки памяти (Memory[index] -= Result)
-        private ICommand _memorySubtractButtonPressCommand;
         public ICommand MemorySubtractButtonPressCommand
         {
             get
             {
-                return _memorySubtractButtonPressCommand ??= new RelayCommand<MemoryCalcItem>(MemorySubtractButtonPress, memoryItem => true);
+                return new RelayCommand<MemoryCalcItem>((memoryItem) =>
+                {
+                    Memory.ChangeValue(memoryItem, "Number", CalcModel.CalculatePriority($"{memoryItem.Number} - {Result}"));
+                });
             }
-        }
-        public void MemorySubtractButtonPress(MemoryCalcItem memoryItem)
-        {
-            Memory.ChangeValue(memoryItem, "Number", CalcModel.CalculatePriority($"{memoryItem.Number} - {Result}"));
         }
         #endregion
     }

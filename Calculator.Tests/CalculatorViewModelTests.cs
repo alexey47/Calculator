@@ -15,29 +15,28 @@ namespace Calculator.Tests
         }
 
         [Test]
-        public void Test_minus3add17_14display()
+        public void Test_minus3add17_result14()
         {
-            _viewModel.DigitButtonPress("3");
-            _viewModel.InvertButtonPress();
+            _viewModel.DigitButtonPressCommand.Execute("3");
+            _viewModel.InvertButtonPressCommand.Execute(null);
             _viewModel.Result.Should().Be("-3");
 
-            _viewModel.ArithmeticOperationButtonPress("+");
-            _viewModel.LastOperation.Should().Be("Operation");
+            _viewModel.ArithmeticOperationButtonPressCommand.Execute("+");
 
-            _viewModel.DigitButtonPress("1");
-            _viewModel.DigitButtonPress("7");
+            _viewModel.DigitButtonPressCommand.Execute("1");
+            _viewModel.DigitButtonPressCommand.Execute("7");
             _viewModel.Result.Should().Be("17");
 
-            _viewModel.EqualButtonPress();
+            _viewModel.EqualButtonPressCommand.Execute(null);
             _viewModel.Expression.Should().Be("-3 + 17 =");
             _viewModel.Result.Should().Be("14");
         }
         [Test]
         public void Test_clear()
         {
-            Test_minus3add17_14display();
+            Test_minus3add17_result14();
 
-            _viewModel.ClearButtonPress();
+            _viewModel.ClearButtonPressCommand.Execute(null);
             _viewModel.Result.Should().Be("0");
             _viewModel.Expression.Should().Be(string.Empty);
         }
