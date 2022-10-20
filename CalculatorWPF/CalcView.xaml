@@ -10,7 +10,7 @@
     d:DataContext="{d:DesignInstance Type=local:CalcViewModel}"
     mc:Ignorable="d"
     Height="476" Width="302" 
-    ResizeMode="CanMinimize"
+    MinHeight="476" MinWidth="302" 
     Background="{DynamicResource SystemAltMediumColorBrush}"
     TextOptions.TextRenderingMode="ClearType"
     FontFamily="./Fonts/#Lato"
